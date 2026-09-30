@@ -257,7 +257,10 @@ table.t tbody tr.link:hover{background:#FAFBFA}
 
 /* ---------- document (proposta) ---------- */
 .doc-wrap{display:flex;justify-content:center}
-.doc{background:#fff;width:210mm;min-height:297mm;padding:16mm 16mm 14mm;box-shadow:0 2px 3px rgba(28,33,36,.06),0 18px 40px rgba(28,33,36,.12);border-radius:4px;display:flex;flex-direction:column;font-size:10.5pt;color:#1C2124}
+.doc{background:#fff;width:210mm;min-height:297mm;padding:16mm 16mm 14mm;box-shadow:0 2px 3px rgba(28,33,36,.06),0 18px 40px rgba(28,33,36,.12);border-radius:4px;display:flex;flex-direction:column;font-size:10.5pt;color:#1C2124;position:relative}
+.doc.wm-free::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='240'%3E%3Ctext x='-30' y='160' font-family='Arial,Helvetica,sans-serif' font-size='30' font-weight='800' fill='rgba(28,33,36,0.10)' transform='rotate(-28 220 120)'%3EEXPERIMENTE %C2%B7 SEM VALOR COMERCIAL%3C/text%3E%3C/svg%3E");
+  background-repeat:repeat}
 .doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:14px;border-bottom:3px solid var(--yellow)}
 .doc-head img{max-height:62px;max-width:200px;object-fit:contain}
 .doc-co{text-align:right;font-size:9pt;color:#5B6468;line-height:1.5}
@@ -268,9 +271,14 @@ table.t tbody tr.link:hover{background:#FAFBFA}
 .doc-title .n b{color:#1C2124;font-size:12pt}
 .doc-client{display:grid;grid-template-columns:1.4fr 1fr;gap:10px 20px;background:#F4F5F4;border-radius:6px;padding:12px 14px;font-size:9.5pt;margin-bottom:18px}
 .doc-client span{display:block;color:#687276;font-size:8pt}
-.doc table{width:100%;border-collapse:collapse;font-size:9.5pt}
+.doc table{width:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed}
 .doc th{background:#1C2124;color:#fff;text-align:left;font-weight:600;padding:7px 8px;font-size:8.5pt}
-.doc td{padding:7px 8px;border-bottom:1px solid #E3E6E4}
+.doc td{padding:7px 8px;border-bottom:1px solid #E3E6E4;overflow-wrap:break-word}
+.doc th:nth-child(1),.doc td:nth-child(1){width:26px}
+.doc th:nth-child(3),.doc td:nth-child(3){width:52px}
+.doc th:nth-child(4),.doc td:nth-child(4){width:58px}
+.doc th:nth-child(5),.doc td:nth-child(5){width:80px}
+.doc th:nth-child(6),.doc td:nth-child(6){width:82px}
 .doc .r{text-align:right}.doc .c{text-align:center}
 .doc tr:nth-child(even) td{background:#FAFBFA}
 .doc .amb{color:#687276}
@@ -345,6 +353,9 @@ details.cmp .inner p{margin:0 0 10px;color:var(--muted);font-size:13px}
   .main{padding:0}
   .doc{box-shadow:none;border-radius:0;width:210mm;min-height:297mm}
   .doc *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .doc table{page-break-inside:auto}
+  .doc tr{page-break-inside:avoid;page-break-after:auto}
+  .doc thead{display:table-header-group}
 }
 
 /* =================== QUANTOFICA THEME =================== */
@@ -1023,9 +1034,7 @@ function defaultConfig(){
     adm:0.05, lucro:0.15, imp:0.06, fator:1.2, esp:4, validade:15,
     cond:"50% na aprovação e 50% na conclusão dos serviços.",
     obs:"Não inclui projetos, taxas e licenças, louças, metais e acabamentos não listados. Serviços extras serão orçados à parte.",
-    database:"", estado:"", tourVisto:false,
-    // MOCKUP — dado real virá do Supabase/Asaas quando a assinatura existir de verdade
-    assinatura:{plano:"profissional", nome:"Profissional", valor:39, renovacao:"28/10/2026", status:"ativa"}};
+    database:"", estado:"", tourVisto:false};
 }
 // Multiplicador regional aproximado, calculado a partir do CUB/m² (R1-N) por estado
 // publicado por agregadores de dados do CUB/SINDUSCON, com Minas Gerais como referência (=1,00).
@@ -1066,6 +1075,7 @@ function seed(){
 function migrate(s){
   const d = seed();
   s.config = Object.assign(defaultConfig(), s.config || {});
+  delete s.config.assinatura; // dado de exemplo antigo — o plano real vem de profiles.plano (PLANO)
   for (const k of ["insumos","servicos","comp"]) if (!Array.isArray(s[k]) || !s[k].length) s[k] = d[k];
   if (!Array.isArray(s.orcamentos)) s.orcamentos = [];
   if (!Array.isArray(s.precoHist)) s.precoHist = [];
@@ -1795,14 +1805,14 @@ VIEWS.proposta = id => {
       <div class="actions"><a class="btn" href="#/config">Editar dados da empresa</a><button class="btn ghost" onclick="safePrint()">${ic("down", 2)}Salvar PDF</button><button class="btn ghost" id="link-aprovacao">${ic("link", 2)}Link de aprovação</button><button class="btn primary" id="wa-send">${ic("whats", 2)}Compartilhar proposta</button></div></div>
     ${!cf.empresa ? `<div class="banner">Sua proposta está sem os dados da empresa. <a href="#/config">Preencher agora</a></div>` : ""}
   </div>
-  <div class="doc-wrap"><article class="doc">
+  <div class="doc-wrap"><article class="doc ${PLANO === "experimente" ? "wm-free" : ""}">
     <header class="doc-head">
-      <div>${cf.logo ? `<img src="${cf.logo}" alt="Logo">` : ""}</div>
+      <div>${(PLANO === "profissional" && cf.logo) ? `<img src="${cf.logo}" alt="Logo">` : ""}</div>
       <div class="doc-co"><b>${esc(cf.empresa) || "Sua empresa"}</b>${co.join("<br>")}</div>
     </header>
     <div class="doc-title"><h2>Proposta comercial</h2><div class="n">Nº <b>${esc(o.numero)}</b><br>Emitida em ${dBR(o.data)} · válida até ${dBR(validade(o))}</div></div>
     <div class="doc-client"><div><span>Cliente</span><b>${esc(o.cliente) || "—"}</b></div><div><span>Telefone</span>${esc(o.tel) || "—"}</div><div style="grid-column:1/-1"><span>Endereço da obra</span>${esc(o.endereco) || "—"}</div></div>
-    <table><thead><tr><th style="width:34px" class="c">#</th><th>Serviço</th><th class="c">Unid.</th><th class="r">Qtd.</th><th class="r" style="white-space:nowrap">Preço unit.</th><th class="r">Total</th></tr></thead><tbody>
+    <table><thead><tr><th class="c">#</th><th>Serviço</th><th class="c">Unid.</th><th class="r">Qtd.</th><th class="r">Preço unit.</th><th class="r">Total</th></tr></thead><tbody>
       ${o.itens.map((x, i) => [x, c.rows[i]]).filter(([, r]) => r.q > 0).map(([x, r], i) => { return `<tr><td class="c">${i + 1}</td><td>${esc(r.sv.d)}${ambLabel(o, x) ? ` <span class="amb">· ${esc(ambLabel(o, x))}</span>` : ""}</td><td class="c">${r.sv.u}</td><td class="r">${N(r.q)}</td><td class="r">${R(r.pu)}</td><td class="r"><b>${R(r.total)}</b></td></tr>`; }).join("")}
     </tbody></table>
     <div class="doc-total"><span>Valor total da proposta</span><b>${R(c.total)}</b></div>
@@ -1835,18 +1845,76 @@ function sendFollowUp(id){
     toast("Lembrete aberto no WhatsApp — próxima cobrança marcada pra daqui 7 dias");
   }
 }
+function addWatermarkPDF(pdf, pageW, pageH){
+  pdf.saveGraphicsState();
+  pdf.setGState(new pdf.GState({opacity:0.14}));
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(20);
+  pdf.setTextColor(28, 33, 36);
+  const text = "EXPERIMENTE · SEM VALOR COMERCIAL";
+  for (let y = 25; y < pageH + 10; y += 42) {
+    for (let x = -50; x < pageW + 50; x += 105) pdf.text(text, x, y, {angle: 32});
+  }
+  pdf.restoreGraphicsState();
+}
 async function buildProposalPDF(){
   const node = document.querySelector(".doc");
-  const canvas = await html2canvas(node, {scale:2, backgroundColor:"#ffffff", useCORS:true});
+  // Na tela, o .doc tem altura mínima de uma folha A4 inteira (pra parecer papel de verdade
+  // mesmo numa proposta curta). Pro PDF isso não interessa: tiramos essa altura mínima só durante
+  // a captura, senão uma proposta curta sobra com a assinatura numa segunda página quase em branco.
+  const prevMinHeight = node.style.minHeight;
+  node.style.minHeight = "0";
+  // Guarda as áreas que não podem ser cortadas ao meio entre uma página e outra do PDF: cada
+  // linha da tabela, e o bloco final (total + condições + assinatura), pra nunca sobrar só a
+  // assinatura sozinha numa página final quase em branco.
+  const docRect = node.getBoundingClientRect();
+  const noSplitCss = Array.from(node.querySelectorAll("table tbody tr")).map(tr => {
+    const r = tr.getBoundingClientRect();
+    return {top: r.top - docRect.top, bottom: r.bottom - docRect.top};
+  });
+  const total = node.querySelector(".doc-total"), foot = node.querySelector(".doc-foot");
+  if (total && foot) {
+    const rt = total.getBoundingClientRect(), rf = foot.getBoundingClientRect();
+    noSplitCss.push({top: rt.top - docRect.top, bottom: rf.bottom - docRect.top});
+  }
+  let canvas;
+  try { canvas = await html2canvas(node, {scale:2, backgroundColor:"#ffffff", useCORS:true}); }
+  finally { node.style.minHeight = prevMinHeight; }
   const {jsPDF} = window.jspdf;
   const pdf = new jsPDF({unit:"mm", format:"a4"});
   const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW, imgH = canvas.height * imgW / canvas.width;
-  const imgData = canvas.toDataURL("image/jpeg", 0.92);
-  let heightLeft = imgH, position = 0;
-  pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
-  heightLeft -= pageH;
-  while (heightLeft > 0) { position = heightLeft - imgH; pdf.addPage(); pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH); heightLeft -= pageH; }
+  const scaleFactor = canvas.width / docRect.width;
+  const rows = noSplitCss.map(r => ({top: r.top * scaleFactor, bottom: r.bottom * scaleFactor}));
+  const pxPerMM = canvas.width / pageW;
+  const pageHpx = pageH * pxPerMM;
+
+  // Pontos de corte: um a cada "altura de página", empurrados pra trás até o fim da linha
+  // anterior sempre que o corte natural cairia no meio de uma linha da tabela.
+  const cuts = [0];
+  let cursor = 0;
+  while (cursor < canvas.height - 1) {
+    let next = Math.min(cursor + pageHpx, canvas.height);
+    if (next < canvas.height) {
+      const crossing = rows.find(r => r.top < next - 1 && r.bottom > next + 1);
+      if (crossing && crossing.top > cursor + 20) next = crossing.top;
+    }
+    cuts.push(next);
+    cursor = next;
+  }
+
+  const tmp = document.createElement("canvas");
+  const tctx = tmp.getContext("2d");
+  for (let i = 0; i < cuts.length - 1; i++) {
+    const y0 = cuts[i], y1 = cuts[i + 1], sliceH = y1 - y0;
+    if (sliceH <= 0) continue;
+    tmp.width = canvas.width; tmp.height = sliceH;
+    tctx.clearRect(0, 0, tmp.width, tmp.height);
+    tctx.drawImage(canvas, 0, y0, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+    const imgData = tmp.toDataURL("image/jpeg", 0.92);
+    if (i > 0) pdf.addPage();
+    pdf.addImage(imgData, "JPEG", 0, 0, pageW, sliceH / pxPerMM);
+    if (PLANO === "experimente") addWatermarkPDF(pdf, pageW, pageH);
+  }
   return pdf.output("blob");
 }
 function approvalLink(o){ return `https://app.quantofica.com.br/aprovar/${(o.numero || "proposta").replace(/\//g, "-")}`; }
@@ -2120,40 +2188,19 @@ function compRowModal(serviceCode){
 }
 
 
-/* ---------- assinatura (MOCKUP — cobrança real virá do Supabase/Asaas) ---------- */
-function renderAssinaturaBox(a){
-  if (!a || a.plano === "gratis") {
-    return `<div class="banner">Você está no plano <b>Experimente</b> (grátis). <a href="#/config">Fazer upgrade</a></div>`;
+/* ---------- assinatura (reflete o plano real vindo de profiles.plano — cobrança de verdade ainda não existe) ---------- */
+const PLANOS_NOME = {experimente:"Experimente", essencial:"Essencial", profissional:"Profissional"};
+const PLANOS_VALOR = {experimente:0, essencial:19, profissional:39};
+function renderAssinaturaBox(){
+  if (PLANO === "experimente") {
+    const usados = Math.min(ORC_TOTAL, 1);
+    return `<div class="banner">Você está no plano <b>Experimente</b> (grátis) — ${usados} de 1 orçamento grátis usado. <a href="javascript:void(0)" onclick="supportModal()">Fazer upgrade</a></div>`;
   }
-  if (a.status === "cancelando") {
-    return `<div class="banner" style="background:var(--yellow-soft);border-color:#F0D98A">
-        Sua assinatura <b>${esc(a.nome)}</b> foi cancelada e não será renovada. Você continua com acesso completo até <b>${esc(a.renovacao)}</b>.
-      </div>
-      <div class="actions" style="margin-top:10px"><button class="btn" id="reativar">Reativar assinatura</button></div>`;
-  }
+  const nome = PLANOS_NOME[PLANO] || PLANO, valor = PLANOS_VALOR[PLANO] ?? 0;
   return `<div class="grid g2">
-      <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(a.nome)} — R$ ${N(a.valor)}/mês</div></label>
-      <label class="f"><span class="hint">Próxima cobrança (Pix automático)</span><div class="in" style="display:flex;align-items:center;background:var(--concrete)">${esc(a.renovacao)}</div></label>
+      <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(nome)} — R$ ${N(valor)}/mês</div></label>
     </div>
-    <div class="actions" style="margin-top:4px">
-      <a class="btn ghost" href="#/config" style="width:auto">Trocar de plano</a>
-      <button class="btn ghost" id="cancelarAssinatura" style="color:var(--red)">Cancelar assinatura</button>
-    </div>`;
-}
-function cancelarAssinaturaModal(){
-  const a = S.config.assinatura;
-  const {sc, close} = openModal(`<div class="modal" role="dialog" aria-label="Cancelar assinatura" style="max-width:440px">
-    <div class="modal-head"><h3>Cancelar assinatura?</h3></div>
-    <div class="modal-body" style="padding:18px 22px">
-      <p class="sub" style="margin:0 0 10px">Você continua com acesso ao plano <b>${esc(a.nome)}</b> até <b>${esc(a.renovacao)}</b> — a cobrança recorrente é que para de acontecer depois disso. Seus orçamentos e dados não são apagados.</p>
-    </div>
-    <div class="modal-foot"><span></span><div class="actions"><button class="btn ghost" data-close>Voltar</button><button class="btn" style="background:var(--red);border-color:var(--red);color:#fff" data-ok>Sim, cancelar</button></div></div>
-  </div>`);
-  sc.addEventListener("click", e => {
-    if (!e.target.closest("[data-ok]")) return;
-    S.config.assinatura.status = "cancelando";
-    save(); close(); route(); toast("Assinatura cancelada. Acesso continua até " + a.renovacao + ".");
-  });
+    <p class="hint" style="margin-top:10px">A cobrança automática ainda está sendo finalizada. Pra trocar de plano ou cancelar por enquanto, fale com a gente em <a href="javascript:void(0)" onclick="supportModal()">Ajuda / Suporte</a>.</p>`;
 }
 
 /* ---------- configurações ---------- */
@@ -2170,12 +2217,20 @@ VIEWS.config = () => {
       <div class="actions" style="margin-top:4px"><button class="btn ghost" id="chgpass">Trocar senha</button><button class="btn ghost" id="rever-tour">${ic("help",1.8)} Rever tour de boas-vindas</button><button class="btn ghost" id="logout">${ic("lock",1.8)} Sair</button></div>
     </section>
     <section class="panel"><h2>Assinatura</h2><p class="sub">Seu plano, cobrança e cancelamento.</p>
-      ${renderAssinaturaBox(c.assinatura)}
+      ${renderAssinaturaBox()}
     </section>
     <section class="panel"><h2>Sua empresa</h2><p class="sub">Aparece no cabeçalho da proposta.</p>
+      ${PLANO === "profissional" ? `
       <div class="logo-box" style="margin-bottom:18px"><div class="logo-prev" id="lp">${c.logo ? `<img src="${c.logo}" alt="">` : "Sem logo"}</div>
         <div><label class="btn sm" style="cursor:pointer">${ic("up")}Enviar logo<input type="file" accept="image/*" id="logo" hidden></label>
         ${c.logo ? `<button class="btn sm ghost" id="rmlogo">Remover</button>` : ""}<p class="hint" style="margin-top:8px">PNG ou JPG com fundo branco ou transparente.</p></div></div>
+      ` : `
+      <div class="logo-box" style="margin-bottom:18px;opacity:.55">
+        <div class="logo-prev" style="filter:blur(1.5px)">Sem logo</div>
+        <div><button class="btn sm" disabled style="cursor:not-allowed;opacity:.7">${ic("up")}Enviar logo</button>
+        <p class="hint" style="margin-top:8px">Disponível no plano <b>Profissional</b>. <a href="javascript:void(0)" onclick="supportModal()">Fazer upgrade</a> pra colocar a logo da sua empresa na proposta.</p></div>
+      </div>
+      `}
       <div class="grid g2">${f("empresa", "Nome ou empresa", "Ex.: Silva Reformas")}${f("doc", "CPF ou CNPJ")}${f("registro", "Registro profissional (opcional)", "CREA/CAU")}${f("tel", "Telefone / WhatsApp")}${f("email", "E-mail")}${f("cidade", "Cidade / UF")}</div>
     </section>
     <section class="panel"><h2>Preço de referência por região</h2><p class="sub">Pra não começar do zero: carregue um ponto de partida pros seus preços, com base no custo médio do seu estado.</p>
@@ -2210,8 +2265,6 @@ AFTER.config = () => {
   $("#logout")?.addEventListener("click", async () => { await sb.auth.signOut(); S = seed(); bootGate(); });
   $("#chgpass")?.addEventListener("click", changePasswordModal);
   $("#rever-tour")?.addEventListener("click", startTour);
-  $("#cancelarAssinatura")?.addEventListener("click", cancelarAssinaturaModal);
-  $("#reativar")?.addEventListener("click", () => { S.config.assinatura.status = "ativa"; save(); route(); toast("Assinatura reativada!"); });
   $("#estado-sel")?.addEventListener("change", e => {
     S.config.estado = e.target.value; save();
     const btn = $("#carregar-precos-regiao"); if (btn) btn.disabled = !e.target.value;
@@ -2240,7 +2293,7 @@ AFTER.config = () => {
     if (c.imp >= 1) c.imp = 0.99;
     $("#bdi").textContent = N(bdi() * 100, 1) + "%"; save();
   });
-  $("#logo").addEventListener("change", e => {
+  $("#logo")?.addEventListener("change", e => {
     const file = e.target.files[0]; if (!file) return;
     const img = new Image(), rd = new FileReader();
     rd.onload = () => { img.onload = () => {
