@@ -2191,16 +2191,78 @@ function compRowModal(serviceCode){
 /* ---------- assinatura (reflete o plano real vindo de profiles.plano — cobrança de verdade ainda não existe) ---------- */
 const PLANOS_NOME = {experimente:"Experimente", essencial:"Essencial", profissional:"Profissional"};
 const PLANOS_VALOR = {experimente:0, essencial:19, profissional:39};
+const PLANOS_FEATURES = {
+  experimente: [
+    {ok:true, txt:"1 orçamento grátis"},
+    {ok:true, txt:"PDF com marca d'água"},
+    {ok:false, txt:"Orçamentos ilimitados"},
+    {ok:false, txt:"PDF com sua marca"},
+    {ok:false, txt:"Exportar Excel"},
+    {ok:false, txt:"Histórico salvo"},
+  ],
+  essencial: [
+    {ok:true, txt:"Orçamentos ilimitados"},
+    {ok:true, txt:"PDF com a marca Quantofica"},
+    {ok:false, txt:"PDF com sua marca"},
+    {ok:false, txt:"Exportar Excel"},
+    {ok:true, txt:"Últimos 10 orçamentos salvos"},
+    {ok:true, txt:"Suporte por e-mail"},
+  ],
+  profissional: [
+    {ok:true, txt:"Orçamentos ilimitados"},
+    {ok:true, txt:"PDF com a logo e dados da sua empresa"},
+    {ok:true, txt:"Exportar Excel"},
+    {ok:true, txt:"Histórico completo e ilimitado"},
+    {ok:true, txt:"Suporte prioritário"},
+  ],
+};
+const PLANO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
+const PLANO_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function planosModal(){
+  const ordem = ["experimente", "essencial", "profissional"];
+  const {sc, close} = openModal(`<div class="modal wide" role="dialog" aria-label="Planos" style="max-width:920px">
+    <div class="modal-head"><h3>Planos</h3><p class="hint" style="margin-top:4px">Cancele quando quiser, sem multa.</p></div>
+    <div class="modal-body" style="padding:18px 22px">
+      <div class="grid g3" style="align-items:stretch">
+        ${ordem.map(p => {
+          const atual = p === PLANO;
+          const nome = PLANOS_NOME[p], valor = PLANOS_VALOR[p];
+          const feats = PLANOS_FEATURES[p].map(f => `<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:${f.ok ? "var(--ink)" : "var(--faint)"}">
+            <span style="flex:none;width:16px;height:16px;display:inline-flex">${f.ok ? PLANO_CHECK : PLANO_X}</span>${esc(f.txt)}
+          </li>`).join("");
+          return `<div style="border:1px solid ${atual ? "var(--blue)" : "var(--line-soft)"};border-radius:var(--r-m);padding:16px;display:flex;flex-direction:column;background:${atual ? "var(--blue-soft)" : "var(--surface)"}">
+            ${atual ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
+            <h4 style="margin:0 0 4px">${esc(nome)}</h4>
+            <div style="font-size:22px;font-weight:800;margin-bottom:10px">R$ ${N(valor)}${valor ? "<span style='font-size:12px;font-weight:600;color:var(--muted)'>/mês</span>" : ""}</div>
+            <ul style="list-style:none;margin:0 0 14px;padding:0;flex:1">${feats}</ul>
+            ${atual
+              ? `<button class="btn ghost" disabled style="cursor:default">Plano atual</button>`
+              : `<button class="btn primary" data-escolher="${p}">${PLANOS_VALOR[p] > valor_atual(PLANO) ? "Fazer upgrade" : "Mudar de plano"}</button>`}
+          </div>`;
+        }).join("")}
+      </div>
+      <p class="hint" style="margin-top:16px">A cobrança automática ainda está sendo finalizada — por enquanto, a troca de plano é feita manualmente com a gente.</p>
+    </div>
+  </div>`);
+  function valor_atual(p){ return PLANOS_VALOR[p] ?? 0; }
+  sc.addEventListener("click", e => {
+    const btn = e.target.closest("[data-escolher]");
+    if (!btn) return;
+    const alvo = btn.dataset.escolher;
+    close();
+    supportModal({motivo:"Trocar de plano", msg:`Quero trocar do plano ${PLANOS_NOME[PLANO]} para o plano ${PLANOS_NOME[alvo]}.`});
+  });
+}
 function renderAssinaturaBox(){
   if (PLANO === "experimente") {
     const usados = Math.min(ORC_TOTAL, 1);
-    return `<div class="banner">Você está no plano <b>Experimente</b> (grátis) — ${usados} de 1 orçamento grátis usado. <a href="javascript:void(0)" onclick="supportModal()">Fazer upgrade</a></div>`;
+    return `<div class="banner">Você está no plano <b>Experimente</b> (grátis) — ${usados} de 1 orçamento grátis usado. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a></div>`;
   }
   const nome = PLANOS_NOME[PLANO] || PLANO, valor = PLANOS_VALOR[PLANO] ?? 0;
   return `<div class="grid g2">
       <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(nome)} — R$ ${N(valor)}/mês</div></label>
     </div>
-    <p class="hint" style="margin-top:10px">A cobrança automática ainda está sendo finalizada. Pra trocar de plano ou cancelar por enquanto, fale com a gente em <a href="javascript:void(0)" onclick="supportModal()">Ajuda / Suporte</a>.</p>`;
+    <p class="hint" style="margin-top:10px"><a href="javascript:void(0)" onclick="planosModal()">Ver todos os planos</a>. A cobrança automática ainda está sendo finalizada — pra trocar de plano ou cancelar por enquanto, fale com a gente em <a href="javascript:void(0)" onclick="supportModal()">Ajuda / Suporte</a>.</p>`;
 }
 
 /* ---------- configurações ---------- */
@@ -2228,7 +2290,7 @@ VIEWS.config = () => {
       <div class="logo-box" style="margin-bottom:18px;opacity:.55">
         <div class="logo-prev" style="filter:blur(1.5px)">Sem logo</div>
         <div><button class="btn sm" disabled style="cursor:not-allowed;opacity:.7">${ic("up")}Enviar logo</button>
-        <p class="hint" style="margin-top:8px">Disponível no plano <b>Profissional</b>. <a href="javascript:void(0)" onclick="supportModal()">Fazer upgrade</a> pra colocar a logo da sua empresa na proposta.</p></div>
+        <p class="hint" style="margin-top:8px">Disponível no plano <b>Profissional</b>. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a> pra colocar a logo da sua empresa na proposta.</p></div>
       </div>
       `}
       <div class="grid g2">${f("empresa", "Nome ou empresa", "Ex.: Silva Reformas")}${f("doc", "CPF ou CNPJ")}${f("registro", "Registro profissional (opcional)", "CREA/CAU")}${f("tel", "Telefone / WhatsApp")}${f("email", "E-mail")}${f("cidade", "Cidade / UF")}</div>
@@ -2352,7 +2414,10 @@ const FAQ_INSTALAR = [
     a: `Não precisa. O Quantofica funciona direto pelo navegador — instalando na tela inicial como acima, ele abre em tela cheia, com ícone e nome próprios, sem precisar de loja de aplicativos.`
   }
 ];
-function supportModal(){
+function supportModal(prefill){
+  const pMotivo = prefill?.motivo, pMsg = prefill?.msg || "";
+  const motivos = ["Dúvida", "Sugestão", "Problema", "Trocar de plano", "Outro"];
+  const motivoLabel = {"Dúvida":"Tenho uma dúvida sobre como usar", "Sugestão":"Quero sugerir uma melhoria", "Problema":"Encontrei um erro / algo não funciona", "Trocar de plano":"Quero trocar de plano", "Outro":"Outro assunto"};
   const {sc, close} = openModal(`<div class="modal" role="dialog" aria-label="Suporte">
     <div class="modal-head"><h3><span style="display:inline-flex;width:20px;height:20px;vertical-align:-4px">${ic("help",2)}</span> Ajuda / Suporte</h3></div>
     <div class="modal-body" style="padding:18px 22px">
@@ -2371,20 +2436,17 @@ function supportModal(){
       <div class="grid g2">
         <label class="f span2">Sobre o que é?
           <select class="in" id="sp-motivo">
-            <option value="Dúvida">Tenho uma dúvida sobre como usar</option>
-            <option value="Sugestão">Quero sugerir uma melhoria</option>
-            <option value="Problema">Encontrei um erro / algo não funciona</option>
-            <option value="Outro">Outro assunto</option>
+            ${motivos.map(m => `<option value="${esc(m)}" ${m === pMotivo ? "selected" : ""}>${esc(motivoLabel[m])}</option>`).join("")}
           </select>
         </label>
-        <label class="f span2">Sua mensagem<textarea class="in" id="sp-msg" rows="5" placeholder="Conte com detalhes o que está acontecendo ou o que você gostaria de sugerir..."></textarea></label>
+        <label class="f span2">Sua mensagem<textarea class="in" id="sp-msg" rows="5" placeholder="Conte com detalhes o que está acontecendo ou o que você gostaria de sugerir...">${esc(pMsg)}</textarea></label>
         <label class="f span2">Seu e-mail ou WhatsApp para retorno (opcional)<input class="in" id="sp-contato" value="${esc(S.config.email || "")}" placeholder="Assim conseguimos te responder"></label>
       </div>
       <p class="hint" style="margin-top:14px">Ao enviar, seu aplicativo de e-mail vai abrir com a mensagem pronta para o endereço <b>${SUPPORT_EMAIL}</b>. Se preferir, copie esse e-mail e escreva diretamente.</p>
     </div>
     <div class="modal-foot"><span></span><div class="actions"><button class="btn ghost" data-close>Cancelar</button><button class="btn primary" data-ok>${ic("share",2)} Enviar</button></div></div>
   </div>`);
-  setTimeout(() => $("#sp-msg")?.focus(), 30);
+  setTimeout(() => { const ta = $("#sp-msg"); if (pMsg) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } else ta?.focus(); }, 30);
   sc.addEventListener("click", e => {
     if (!e.target.closest("[data-ok]")) return;
     const motivo = $("#sp-motivo").value, msg = $("#sp-msg").value.trim(), contato = $("#sp-contato").value.trim();
