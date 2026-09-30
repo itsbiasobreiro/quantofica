@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='23' fill='%232E44FF'/><g transform='translate(7 7) scale(.86)'><path d='M36 38a14 14 0 1 1 20 12.6c-3.6 1.6-6 4.6-6 8.6v3' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/><rect x='45' y='71.5' width='10' height='10' rx='2' fill='%23FF6A13'/></g></svg>">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="theme-color" content="#2E44FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quantofica">
+<meta name="mobile-web-app-capable" content="yes">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -2265,10 +2273,48 @@ document.addEventListener("click", e => {
   else if (e.target.closest("[data-home]")) go("#/painel");
   else if (e.target.closest("#btn-support") || e.target.closest("#btn-support-m")) supportModal();
 });
+const FAQ_INSTALAR = [
+  {
+    q: "Como colocar o Quantofica na tela inicial do Android?",
+    a: `<ol style="margin:0;padding-left:18px;line-height:1.7">
+      <li>Abra <b>quantofica.app.br</b> no Chrome do celular.</li>
+      <li>Toque nos <b>três pontinhos</b> (⋮) no canto superior direito.</li>
+      <li>Toque em <b>"Adicionar à tela inicial"</b> (ou "Instalar app").</li>
+      <li>Confirme tocando em <b>"Adicionar" / "Instalar"</b>.</li>
+      <li>Pronto — o ícone do Quantofica aparece na tela, igual um app.</li>
+    </ol>`
+  },
+  {
+    q: "Como colocar o Quantofica na tela inicial do iPhone?",
+    a: `<ol style="margin:0;padding-left:18px;line-height:1.7">
+      <li>Abra <b>quantofica.app.br</b> pelo <b>Safari</b> (precisa ser o Safari, não funciona no Chrome do iPhone).</li>
+      <li>Toque no ícone de <b>compartilhar</b> (quadrado com seta pra cima) na barra de baixo.</li>
+      <li>Role as opções e toque em <b>"Adicionar à Tela de Início"</b>.</li>
+      <li>Confirme tocando em <b>"Adicionar"</b> no canto superior direito.</li>
+      <li>Pronto — o ícone do Quantofica aparece na tela, igual um app.</li>
+    </ol>`
+  },
+  {
+    q: "Preciso baixar na Play Store ou na App Store?",
+    a: `Não precisa. O Quantofica funciona direto pelo navegador — instalando na tela inicial como acima, ele abre em tela cheia, com ícone e nome próprios, sem precisar de loja de aplicativos.`
+  }
+];
 function supportModal(){
   const {sc, close} = openModal(`<div class="modal" role="dialog" aria-label="Suporte">
-    <div class="modal-head"><h3>${ic("help",2)} Fale com a gente</h3></div>
+    <div class="modal-head"><h3><span style="display:inline-flex;width:20px;height:20px;vertical-align:-4px">${ic("help",2)}</span> Ajuda / Suporte</h3></div>
     <div class="modal-body" style="padding:18px 22px">
+      <div class="hint" style="font-weight:700;color:var(--ink);margin-bottom:8px">Perguntas frequentes</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        ${FAQ_INSTALAR.map((f,i) => `
+        <details style="border:1px solid var(--line-soft);border-radius:var(--r-m);padding:10px 14px">
+          <summary style="cursor:pointer;font-weight:650;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span>${esc(f.q)}</span>
+            <span aria-hidden="true" style="color:var(--muted);font-size:12px">▾</span>
+          </summary>
+          <div class="hint" style="margin-top:10px">${f.a}</div>
+        </details>`).join("")}
+      </div>
+      <div class="hint" style="font-weight:700;color:var(--ink);margin-bottom:8px">Não achou o que precisava? Fale com a gente</div>
       <div class="grid g2">
         <label class="f span2">Sobre o que é?
           <select class="in" id="sp-motivo">
