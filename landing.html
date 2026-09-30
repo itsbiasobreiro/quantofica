@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quantofica · Orçamento de reforma sem enrolação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --graphite:#1C2124; --graphite-2:#272E32; --graphite-3:#3A4348;
+  --concrete:#ECEEEC; --surface:#FFFFFF; --line:#D8DCDA; --line-soft:#E7E9E7;
+  --ink:#1C2124; --muted:#687276; --faint:#9AA3A6;
+  --yellow:#F2B705; --yellow-soft:#FFF4CC; --yellow-ink:#3B2F00;
+  --blue:#2B5C8A; --blue-soft:#E3EDF6; --green:#2F7D4F; --green-soft:#E1F1E7; --red:#B4412F; --red-soft:#F8E5E1;
+  --r-s:8px; --r-m:10px; --r-l:16px; --r-xl:22px;
+  --font:"Archivo","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --display:"Bricolage Grotesque","Archivo",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font);font-size:15px;color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.01em;margin:0}
+.container{max-width:1080px;margin:0 auto;padding:0 28px}
+
+/* ---- nav ---- */
+.nav{position:sticky;top:0;z-index:20;background:rgba(28,33,36,.92);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.08)}
+.nav .container{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brandrow{display:flex;align-items:center;gap:10px}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+.brand-mark svg{width:19px;height:19px}
+.brand-name{font-weight:800;font-size:16px;color:#fff}
+.nav-cta{display:flex;align-items:center;gap:18px}
+.nav-link{color:#C7CCCE;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none}
+.nav-link:hover{color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--surface);font-weight:700;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn.primary{background:var(--yellow);border-color:var(--yellow);color:var(--yellow-ink)}
+.btn.primary:hover{background:#E5AC00}
+.btn.onDark{background:transparent;border-color:rgba(255,255,255,.35);color:#fff}
+.btn.onDark:hover{background:rgba(255,255,255,.08)}
+.btn.sm{height:36px;padding:0 14px;font-size:13px}
+
+/* ---- hero ---- */
+.hero{background:var(--graphite);color:#fff;padding:88px 0 108px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:34px 34px; mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 78%)}
+.hero::after{content:"";position:absolute;top:-180px;right:-120px;width:560px;height:560px;border-radius:50%;
+  background:radial-gradient(circle,rgba(43,92,138,.55),rgba(43,92,138,0) 68%);pointer-events:none}
+.hero .container{display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(242,183,5,.14);color:var(--yellow);font-size:12px;font-weight:700;letter-spacing:.3px;padding:6px 12px;border-radius:99px;margin-bottom:22px}
+.hero h1{font-size:clamp(32px,4vw,44px);line-height:1.12;margin-bottom:18px}
+.hero h1 b{color:var(--yellow);position:relative}
+.hero p.lead{color:#C7CCCE;font-size:16.5px;line-height:1.65;max-width:480px;margin-bottom:30px}
+.hero-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.hero-actions .micro{font-size:12.5px;color:#9AA3A6}
+.btn.primary{box-shadow:0 10px 26px rgba(242,183,5,.22)}
+.btn.primary:hover{box-shadow:0 12px 30px rgba(242,183,5,.32);transform:translateY(-1px)}
+.btn{transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+
+/* hero visual: fake proposal card */
+.hv{position:relative;margin-top:30px}
+.hv-glow{position:absolute;inset:-30px -10px auto auto;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,183,5,.20),rgba(242,183,5,0) 70%);pointer-events:none;z-index:0}
+.hv-card{background:#fff;border-radius:var(--r-l);box-shadow:0 34px 80px rgba(0,0,0,.5);overflow:hidden;transform:rotate(-1.6deg);position:relative;z-index:1}
+.hv-head{padding:18px 20px 15px;display:flex;align-items:center;gap:11px;border-bottom:3px solid var(--blue)}
+.hv-logo{width:38px;height:38px;border-radius:8px;background:var(--blue-soft);display:flex;align-items:center;justify-content:center;color:var(--blue);flex:none}
+.hv-logo svg{width:19px;height:19px}
+.hv-head b{font-size:14px;color:var(--ink)}
+.hv-head span{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+.hv-body{padding:16px 20px 20px;background:
+  linear-gradient(rgba(43,92,138,.03),rgba(43,92,138,.03)) }
+.hv-title{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.hv-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:12px;color:var(--graphite-2)}
+.hv-row b{font-weight:700}
+.hv-total{display:flex;justify-content:space-between;padding-top:12px;margin-top:4px;font-size:14px;font-weight:800}
+.hv-badge{position:absolute;top:-16px;right:14px;background:var(--yellow);color:var(--yellow-ink);font-weight:800;font-size:11.5px;padding:9px 15px;border-radius:99px;box-shadow:0 10px 22px rgba(0,0,0,.3);transform:rotate(5deg);z-index:2}
+.hv-mini{position:absolute;bottom:-22px;left:-22px;background:#fff;border-radius:var(--r-m);padding:11px 14px;box-shadow:0 18px 38px rgba(0,0,0,.35);display:flex;align-items:center;gap:9px;transform:rotate(2deg);z-index:2}
+.hv-mini .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px var(--green-soft)}
+.hv-mini span{font-size:11.5px;font-weight:700;color:var(--graphite-2)}
+
+/* ---- problem section ---- */
+.section{padding:76px 0}
+.section-head{text-align:center;max-width:600px;margin:0 auto 44px}
+.section-head .kicker{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.section-head h2{font-size:28px;line-height:1.25}
+.section-head p{color:var(--muted);font-size:14.5px;margin-top:10px;line-height:1.6}
+
+.problems{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pcard{background:var(--concrete);border-radius:var(--r-l);padding:26px 22px;transition:transform .2s ease,box-shadow .2s ease;border:1px solid transparent}
+.pcard:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(28,33,36,.10);border-color:var(--line)}
+.pcard .ic{width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--red);margin-bottom:16px;box-shadow:0 4px 10px rgba(180,65,47,.12)}
+.pcard .ic svg{width:20px;height:20px}
+.pcard h3{font-size:15.5px;margin-bottom:8px;font-family:var(--font);font-weight:800}
+.pcard p{font-size:13px;color:var(--muted);line-height:1.55;margin:0}
+
+/* ---- solution section ---- */
+.section.alt{background:var(--graphite);color:#fff;position:relative;overflow:hidden}
+.section.alt::before{content:"";position:absolute;inset:0;opacity:.35;
+  background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:22px 22px;pointer-events:none}
+.section.alt .container{position:relative}
+.section.alt .section-head p{color:#9AA3A6}
+.solutions{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.scard{background:var(--graphite-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-l);padding:26px 22px;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.scard:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.35);border-color:rgba(242,183,5,.35)}
+.scard .num{font-family:var(--display);font-size:13px;font-weight:800;color:var(--yellow);margin-bottom:14px}
+.scard .ic{width:42px;height:42px;border-radius:10px;background:rgba(242,183,5,.14);display:flex;align-items:center;justify-content:center;color:var(--yellow);margin-bottom:16px}
+.scard .ic svg{width:21px;height:21px}
+.scard h3{font-size:16px;margin-bottom:8px;font-family:var(--font);font-weight:800;color:#fff}
+.scard p{font-size:13px;color:#B7BEC1;line-height:1.6;margin:0}
+
+/* ---- how it works ---- */
+.hiw{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;counter-reset:step}
+.hiw::before{content:"";position:absolute;top:23px;left:11%;right:11%;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 16px);z-index:0}
+.hiwcard{position:relative;text-align:center;padding:0 18px;z-index:1}
+.hiwcard .hiw-num{width:46px;height:46px;border-radius:50%;background:var(--surface);border:2px solid var(--blue);color:var(--blue);font-family:var(--display);font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.hiwcard h3{font-size:15px;margin-bottom:8px;font-weight:800}
+.hiwcard p{font-size:13px;color:var(--muted);line-height:1.55;margin:0;max-width:230px;margin-inline:auto}
+
+/* ---- plans teaser ---- */
+.pteaser{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px}
+.ptcard{border:2px solid var(--line);border-radius:var(--r-l);padding:22px 20px;text-align:center;position:relative;transition:transform .2s ease,box-shadow .2s ease}
+.ptcard:hover{transform:translateY(-4px);box-shadow:0 16px 30px rgba(28,33,36,.10)}
+.ptcard.on{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.ptcard.on:hover{box-shadow:0 0 0 3px var(--blue-soft),0 16px 30px rgba(43,92,138,.18)}
+.ptcard .tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--yellow);color:var(--yellow-ink);font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.ptcard h3{font-size:14.5px;margin-bottom:6px;font-family:var(--font);font-weight:700;color:var(--muted)}
+.ptcard .price{font-size:26px;font-weight:800}
+.ptcard .price span{font-size:12px;font-weight:600;color:var(--muted)}
+.ptcard .desc{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* ---- final cta ---- */
+.finalcta{background:var(--blue);color:#fff;border-radius:var(--r-xl);padding:52px 40px;text-align:center;margin:0 28px;position:relative;overflow:hidden}
+.finalcta::before{content:"";position:absolute;top:-90px;left:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),rgba(255,255,255,0) 70%)}
+.finalcta::after{content:"";position:absolute;bottom:-110px;right:-40px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(242,183,5,.18),rgba(242,183,5,0) 70%)}
+.finalcta h2,.finalcta p,.finalcta .btn{position:relative}
+.finalcta h2{font-size:27px;margin-bottom:10px;color:#fff}
+.finalcta p{color:var(--blue-soft);font-size:14.5px;margin-bottom:26px}
+
+footer{padding:40px 0 46px;text-align:center;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line-soft)}
+footer a{color:var(--muted);font-weight:600}
+
+/* ---- scroll reveal ---- */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.is-visible{opacity:1;transform:translateY(0)}
+
+@media (max-width:860px){
+  .hero .container{grid-template-columns:1fr}
+  .hero{padding-top:44px}
+  .hv{margin-top:56px;max-width:380px}
+  .problems,.solutions,.pteaser,.hiw{grid-template-columns:1fr}
+  .hiw::before{display:none}
+  .hiwcard{margin-bottom:8px}
+  .hero h1{font-size:30px}
+}
+
+@media (max-width:480px){
+  .container{padding:0 16px}
+  .nav .container{height:58px}
+  .nav-cta{gap:10px}
+  .brand-mark{width:28px;height:28px}
+  .brand-mark svg{width:16px;height:16px}
+  .brand-name{display:none}
+  .nav-link{font-size:12.5px}
+  .btn.sm{height:34px;padding:0 12px;font-size:12.5px}
+  .hero{padding:64px 0 72px}
+  .finalcta{margin:0 16px;padding:40px 22px}
+}
+
+/* ================= app overlay (reused from cadastro mockup) ================= */
+#appOverlay{position:fixed;inset:0;background:var(--graphite);display:none;align-items:center;justify-content:center;padding:24px;z-index:100}
+#appOverlay.on{display:flex}
+.card{background:#fff;border-radius:var(--r-l);width:min(560px,100%);padding:34px 34px 30px;box-shadow:0 24px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
+.card.wide{width:min(760px,100%)}
+.card .brandrow{margin-bottom:22px}
+.card .brand-name{color:var(--ink)}
+.closeOverlay{position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:50%;background:var(--concrete);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+.card{position:relative}
+.card h1{font-size:20px;margin:0 0 4px}
+.card p.sub{color:var(--muted);font-size:13.5px;margin:0 0 24px;line-height:1.5}
+.step-dots{display:flex;gap:6px;margin-bottom:22px}
+.step-dots span{height:4px;flex:1;border-radius:3px;background:var(--line-soft)}
+.step-dots span.on{background:var(--yellow)}
+.plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:8px}
+.plan{border:2px solid var(--line);border-radius:var(--r-m);padding:16px 14px;cursor:pointer;position:relative;transition:border-color .12s,box-shadow .12s}
+.plan:hover{border-color:#B9BFBD}
+.plan.on{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.plan .tag{position:absolute;top:-11px;left:14px;background:var(--yellow);color:var(--yellow-ink);font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.plan h3{margin:6px 0 2px;font-size:15px;font-family:var(--font)}
+.plan .price{font-size:21px;font-weight:800;margin:6px 0 12px;font-family:var(--font)}
+.plan .price span{font-size:11.5px;font-weight:600;color:var(--muted)}
+.plan ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.plan li{display:flex;gap:6px;font-size:11.5px;color:var(--graphite-2);line-height:1.4}
+.plan li svg{width:14px;height:14px;flex:none;margin-top:1px;color:var(--green)}
+.plan li.off{color:var(--faint)}
+.plan li.off svg{color:var(--faint)}
+.plan li b{font-weight:700}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted);font-weight:500;margin-bottom:14px}
+.grid.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid.g2 label.f{margin-bottom:0}
+select.in{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23687276' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 10px center;background-size:16px;padding-right:32px}
+@media (max-width:520px){ .grid.g2{grid-template-columns:1fr} }
+@media (max-width:640px){
+  #appOverlay{padding:0;align-items:flex-start}
+  .card{width:100%;max-width:100%;border-radius:0;padding:26px 20px 24px;max-height:100vh}
+  .card.wide{width:100%;max-width:100%}
+  .plans{grid-template-columns:1fr;gap:14px}
+}
+.in{height:40px;border:1px solid var(--line);border-radius:var(--r-s);background:#fff;padding:0 12px;width:100%}
+.card .btn{width:100%}
+.btn.ghost{background:transparent;border:none;color:var(--muted);height:auto;padding:0;font-weight:600;font-size:13px;width:auto}
+.err{color:#D64545;font-size:12.5px;font-weight:600;margin:-6px 0 14px;display:none}
+.err.on{display:block}
+.gate-switch{text-align:center;font-size:13px;color:var(--muted);margin:18px 0 0}
+.gate-switch a{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none}
+.gate-switch a:hover{text-decoration:underline}
+.pixbox{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0 4px}
+.qr{width:200px;height:200px;border-radius:12px;border:1px solid var(--line);background:
+  repeating-linear-gradient(45deg,#1C2124 0 6px, #fff 6px 12px) 0 0/100% 100%,#fff;
+  background-size:14px 14px; background-image:
+   linear-gradient(90deg,#1C2124 2px,transparent 2px),
+   linear-gradient(#1C2124 2px,transparent 2px);
+  background-color:#fff; padding:14px; box-shadow:0 4px 18px rgba(0,0,0,.08); margin-bottom:18px}
+.amount{font-size:30px;font-weight:800;margin:2px 0 2px}
+.amount span{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+.copyrow{display:flex;gap:8px;width:100%;margin:16px 0 6px}
+.copyrow input{flex:1;font-size:11.5px;color:var(--muted);background:var(--concrete);border:1px solid var(--line);border-radius:var(--r-s);padding:0 10px;height:38px}
+.copyrow button{height:38px;padding:0 14px;border-radius:var(--r-s);border:1px solid var(--graphite);background:var(--graphite);color:#fff;font-weight:700;font-size:12.5px;cursor:pointer}
+.waitrow{display:flex;align-items:center;gap:9px;margin-top:20px;color:var(--muted);font-size:12.5px;font-weight:600}
+.spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.okwrap{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 0}
+.okmark{width:64px;height:64px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.okmark svg{width:32px;height:32px;color:var(--green)}
+.emailnote{background:var(--concrete);border-radius:var(--r-m);padding:14px 16px;font-size:12.5px;color:var(--muted);text-align:left;margin:18px 0 22px;line-height:1.5}
+.emailnote b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <div class="brandrow"><div class="brand-mark"><svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M36 38a14 14 0 1 1 20 12.6c-3.6 1.6-6 4.6-6 8.6v3" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><rect x="45" y="71.5" width="10" height="10" rx="2" fill="#FF6A13"/></svg></div><span class="brand-name">quantofica</span></div>
+    <div class="nav-cta">
+      <a class="nav-link" id="navLogin">Entrar</a>
+      <button class="btn primary sm" id="navCta">Começar agora</button>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="hv-copy">
+      <div class="eyebrow">Feito para quem faz reforma, não obra nova</div>
+      <h1>Tabela de governo e Excel genérico não foram feitos pra <b>reforma de verdade</b>.</h1>
+      <p class="lead">O Quantofica calcula com o preço que você realmente paga, considera a produtividade real de reforma, e entrega uma proposta pronta pra mandar pro cliente — em minutos, não horas de planilha.</p>
+      <div class="hero-actions">
+        <button class="btn primary" id="heroCta">Começar agora</button>
+        <span class="micro">Comece grátis · sem cartão de crédito</span>
+      </div>
+    </div>
+    <div class="hv">
+      <div class="hv-glow"></div>
+      <div class="hv-badge">Pronto em 4 min</div>
+      <div class="hv-card">
+        <div class="hv-head">
+          <div class="hv-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+          <div><b>Sobreiro Reformas</b><span>Orçamento · Reforma de banheiro</span></div>
+        </div>
+        <div class="hv-body">
+          <div class="hv-title">Resumo</div>
+          <div class="hv-row"><span>Demolição de revestimento</span><b>R$ 320,00</b></div>
+          <div class="hv-row"><span>Impermeabilização</span><b>R$ 640,00</b></div>
+          <div class="hv-row"><span>Piso e revestimento</span><b>R$ 1.480,00</b></div>
+          <div class="hv-total"><span>Total</span><span>R$ 3.180,00</span></div>
+        </div>
+      </div>
+      <div class="hv-mini"><div class="dot"></div><span>Enviado pro cliente</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="problema">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">O problema</div>
+      <h2>Orçar reforma é osso — e você sabe disso melhor que ninguém</h2>
+      <p>Quem faz reforma não tem as mesmas ferramentas que as empresas grandes. O resultado: orçamento chutado, tempo perdido, ou proposta que não passa confiança.</p>
+    </div>
+    <div class="problems reveal">
+      <div class="pcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Tabela de governo desatualizada</h3>
+        <p>SINAPI e afins são pensados pra obra nova, em preço médio nacional — quase nunca batem com o que você paga na sua região.</p>
+      </div>
+      <div class="pcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg></div>
+        <h3>Excel manual e lento</h3>
+        <p>Cada orçamento novo é meia hora refazendo fórmula, copiando aba, torcendo pra não esquecer nenhum item.</p>
+      </div>
+      <div class="pcard">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3>Sem confiança no papel</h3>
+        <p>Preço mandado no WhatsApp, sem estrutura, faz o cliente desconfiar — e comparar com quem manda proposta de verdade.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker" style="color:var(--yellow)">O diferencial</div>
+      <h2>Feito só pra reforma — não é sobra de sistema de obra grande</h2>
+      <p>Três coisas que o Excel e a tabela de governo não têm juntas.</p>
+    </div>
+    <div class="solutions reveal">
+      <div class="scard">
+        <div class="num">01</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg></div>
+        <h3>Calculado pra reforma, não obra nova</h3>
+        <p>O fator de produtividade de reforma já entra na conta — demolição, imprevisto e retrabalho não pegam você de surpresa.</p>
+      </div>
+      <div class="scard">
+        <div class="num">02</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h3>O preço que você realmente paga</h3>
+        <p>Nada de tabela nacional genérica — você digita o preço da sua loja, da sua região, e o app converte pra cada serviço.</p>
+      </div>
+      <div class="scard">
+        <div class="num">03</div>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+        <h3>Pronto pra mandar em minutos</h3>
+        <p>Sai direto da régua pro PDF com a sua marca — sem virar refém de planilha toda vez que fecha um orçamento novo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-bottom:56px">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Como funciona</div>
+      <h2>Do preço da sua loja até o PDF, em três passos</h2>
+    </div>
+    <div class="hiw reveal">
+      <div class="hiwcard">
+        <div class="hiw-num">1</div>
+        <h3>Você digita seus preços</h3>
+        <p>Material e mão de obra da sua região — uma vez só, o app guarda pra sempre.</p>
+      </div>
+      <div class="hiwcard">
+        <div class="hiw-num">2</div>
+        <h3>Monta o orçamento</h3>
+        <p>Escolhe os serviços do ambiente e o Quantofica calcula com o fator de produtividade de reforma.</p>
+      </div>
+      <div class="hiwcard">
+        <div class="hiw-num">3</div>
+        <h3>Manda pro cliente</h3>
+        <p>Gera o PDF pronto — com a sua marca no plano Profissional — e envia direto pelo WhatsApp.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Planos</div>
+      <h2>Comece grátis. Evolua quando fizer sentido</h2>
+      <p>Sem contrato, sem multa — cancele quando quiser.</p>
+    </div>
+    <div class="pteaser reveal">
+      <div class="ptcard">
+        <h3>Experimente</h3>
+        <div class="price">R$0</div>
+        <div class="desc">1 orçamento grátis, PDF com marca d'água</div>
+      </div>
+      <div class="ptcard">
+        <h3>Essencial</h3>
+        <div class="price">R$19<span>/mês</span></div>
+        <div class="desc">Orçamentos ilimitados, PDF com a marca Quantofica</div>
+      </div>
+      <div class="ptcard on">
+        <span class="tag">Recomendado</span>
+        <h3>Profissional</h3>
+        <div class="price">R$39<span>/mês</span></div>
+        <div class="desc">PDF com a logo da sua empresa, Excel, histórico completo</div>
+      </div>
+    </div>
+    <div style="text-align:center"><button class="btn primary" id="plansCta">Ver planos completos</button></div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="finalcta reveal">
+      <h2>Pare de chutar preço. Comece a fechar mais orçamento.</h2>
+      <p>Grátis pra começar — sem cartão de crédito.</p>
+      <button class="btn primary" id="finalCtaBtn">Começar agora</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  quantofica — uma vertente itsbiasobreiro · <a href="mailto:quantofica@itsbiasobreiro.com">quantofica@itsbiasobreiro.com</a>
+</footer>
+
+<!-- ============ APP OVERLAY (login / planos / cadastro / pix / sucesso) ============ -->
+<div id="appOverlay">
+  <div class="card" id="card">
+    <button class="closeOverlay" id="closeOverlay" aria-label="Fechar">✕</button>
+  </div>
+</div>
+
+<script>
+const gateMark = `<div class="brand-mark"><svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M36 38a14 14 0 1 1 20 12.6c-3.6 1.6-6 4.6-6 8.6v3" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><rect x="45" y="71.5" width="10" height="10" rx="2" fill="#FF6A13"/></svg></div>`;
+const check = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`;
+const xicon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+
+const SUPABASE_URL = "https://jzsjhiflyxpepznkoyxk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6c2poaWZseXhwZXB6bmtveXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzIzNjgsImV4cCI6MjEwNjM0ODM2OH0.CjSku4Gt7V69ZFSwGOMM7E7uhNv8n1gISfuFMmNe9PY";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function traduzErroAuth(msg){
+  const m = (msg || "").toLowerCase();
+  if (m.includes("already registered") || m.includes("already exists")) return "Este e-mail já tem uma conta. Clique em \"Entrar\".";
+  if (m.includes("password") && m.includes("6")) return "A senha precisa ter pelo menos 6 caracteres";
+  if (m.includes("unable to validate email") || m.includes("invalid email")) return "Digite um e-mail válido";
+  return msg || "Algo deu errado. Tente de novo.";
+}
+
+const PLANS = {
+  gratis:       { nome: "Experimente",   preco: 0,  label: "R$0" },
+  essencial:    { nome: "Essencial",     preco: 19, label: "R$19" },
+  profissional: { nome: "Profissional",  preco: 39, label: "R$39" },
+};
+
+const state = { plan: "profissional", nome:"", email:"" };
+const card = document.getElementById("card");
+const overlay = document.getElementById("appOverlay");
+
+function openApp(fn){ overlay.classList.add("on"); fn(); }
+
+// Quem ainda não tem conta não deve cair direto na escolha de plano — primeiro vê o
+// motivo de assinar (o landing por trás do modal), e escolhe o plano lá embaixo.
+function goToLanding(){
+  overlay.classList.remove("on");
+  document.getElementById("problema")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("closeOverlay").addEventListener("click", ()=> overlay.classList.remove("on"));
+overlay.addEventListener("click", (e)=>{ if(e.target === overlay) overlay.classList.remove("on"); });
+
+// Quem já tem conta entra direto no app (login de verdade fica lá, não aqui no landing).
+document.getElementById("navLogin").addEventListener("click", ()=> location.href = "index.html");
+document.getElementById("navCta").addEventListener("click", ()=> openApp(renderPlano));
+document.getElementById("heroCta").addEventListener("click", ()=> openApp(renderPlano));
+document.getElementById("plansCta").addEventListener("click", ()=> openApp(renderPlano));
+document.getElementById("finalCtaBtn").addEventListener("click", ()=> openApp(renderPlano));
+
+// scroll-reveal
+const revealItems = document.querySelectorAll(".reveal");
+if ("IntersectionObserver" in window && revealItems.length){
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add("is-visible"); io.unobserve(en.target); } });
+  }, { threshold: .15, rootMargin: "0px 0px -40px 0px" });
+  revealItems.forEach(el=> io.observe(el));
+} else {
+  revealItems.forEach(el=> el.classList.add("is-visible"));
+}
+
+function closeBtn(){ return `<button class="closeOverlay" id="closeOverlay2" aria-label="Fechar">✕</button>`; }
+function bindClose(){ document.getElementById("closeOverlay2")?.addEventListener("click", ()=> overlay.classList.remove("on")); }
+
+function steps(n){
+  let h = '<div class="step-dots">';
+  for(let i=1;i<=3;i++) h += `<span class="${i<=n?'on':''}"></span>`;
+  return h+'</div>';
+}
+
+function renderConfirmeEmail(email){
+  card.classList.remove("wide");
+  card.innerHTML = `${closeBtn()}
+    <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
+    <h1>Confirme seu e-mail</h1>
+    <p class="sub">Enviamos um link de confirmação para <b>${email}</b>. Clique nele e depois entre normalmente.</p>
+    <button class="btn primary" id="goToApp2">Já confirmei, entrar</button>
+  `;
+  bindClose();
+  document.getElementById("goToApp2").addEventListener("click", ()=> location.href = "index.html");
+}
+
+function renderPlano(){
+  card.classList.add("wide");
+  card.innerHTML = `${closeBtn()}
+    <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
+    ${steps(1)}
+    <h1>Escolha seu plano</h1>
+    <p class="sub">Comece grátis e continue quando quiser mais orçamentos.</p>
+    <div class="plans">
+      <div class="plan" data-p="gratis">
+        <h3>Experimente</h3>
+        <div class="price">R$0</div>
+        <ul>
+          <li>${check}1 orçamento grátis</li>
+          <li>PDF com marca d'água</li>
+          <li class="off">${xicon}Orçamentos ilimitados</li>
+          <li class="off">${xicon}PDF com sua marca</li>
+          <li class="off">${xicon}Exportar Excel</li>
+          <li class="off">${xicon}Histórico salvo</li>
+        </ul>
+      </div>
+      <div class="plan" data-p="essencial">
+        <h3>Essencial</h3>
+        <div class="price">R$19<span> /mês</span></div>
+        <ul>
+          <li>${check}Orçamentos ilimitados</li>
+          <li>${check}PDF com a marca Quantofica</li>
+          <li class="off">${xicon}PDF com sua marca</li>
+          <li class="off">${xicon}Exportar Excel</li>
+          <li>${check}Últimos 10 orçamentos salvos</li>
+          <li>${check}Suporte por e-mail</li>
+        </ul>
+      </div>
+      <div class="plan on" data-p="profissional">
+        <span class="tag">Recomendado</span>
+        <h3>Profissional</h3>
+        <div class="price">R$39<span> /mês</span></div>
+        <ul>
+          <li>${check}Orçamentos ilimitados</li>
+          <li>${check}<b>PDF com a logo e dados da sua empresa</b></li>
+          <li>${check}Exportar Excel</li>
+          <li>${check}Histórico completo e ilimitado</li>
+          <li>${check}Suporte prioritário</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub" style="margin:14px 0 20px;font-size:12px">Cancele quando quiser, sem multa. Pagamento único mensal via Pix.</p>
+    <button class="btn primary" id="go1">Continuar</button>
+    <p class="gate-switch">Já tem conta? <a id="toLogin">Entrar</a></p>
+  `;
+  bindClose();
+  document.getElementById("toLogin").addEventListener("click", ()=> location.href = "index.html");
+  card.querySelectorAll(".plan").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      card.querySelectorAll(".plan").forEach(p=>p.classList.remove("on"));
+      el.classList.add("on"); state.plan = el.dataset.p;
+    });
+  });
+  document.getElementById("go1").addEventListener("click", ()=>{
+    card.classList.remove("wide");
+    if(state.plan === "gratis") renderContaGratis(); else renderConta();
+  });
+}
+
+function renderConta(){
+  const plano = PLANS[state.plan];
+  card.innerHTML = `${closeBtn()}
+    <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
+    ${steps(2)}
+    <h1>Criar sua conta</h1>
+    <p class="sub">Plano <b>${plano.nome} — ${plano.label}/mês</b>. <a class="btn ghost" id="back1" style="display:inline">trocar plano</a></p>
+    <div class="err" id="err"></div>
+    <label class="f">Seu nome<input class="in" id="nome" placeholder="Como podemos te chamar"></label>
+    <label class="f">E-mail<input class="in" id="email" placeholder="seu@email.com"></label>
+    <label class="f">Senha<input class="in" type="password" id="senha" placeholder="Crie uma senha"></label>
+    <div class="grid g2">
+      <label class="f">Profissão<select class="in" id="profissao">
+        <option value="">Selecione</option>
+        <option>Pedreiro(a) / Mestre de obras</option>
+        <option>Empreiteiro(a) / Empresa de reforma</option>
+        <option>Engenheiro(a) civil</option>
+        <option>Arquiteto(a)</option>
+        <option>Autônomo(a) (elétrica, hidráulica, marcenaria...)</option>
+        <option>Outra</option>
+      </select></label>
+      <label class="f">Você vai usar pra...<select class="in" id="finalidade">
+        <option value="">Selecione</option>
+        <option value="profissional">Fazer orçamento pra cliente (uso profissional)</option>
+        <option value="pessoal">Minha própria reforma (uso pessoal)</option>
+        <option value="outro">Outro motivo</option>
+      </select></label>
+    </div>
+    <button class="btn primary" id="go2" style="margin-top:6px">Ir para pagamento</button>
+    <p class="gate-switch">Já tem conta? <a id="toLogin2">Entrar</a></p>
+  `;
+  bindClose();
+  document.getElementById("back1").addEventListener("click", renderPlano);
+  document.getElementById("toLogin2").addEventListener("click", ()=> location.href = "index.html");
+  document.getElementById("go2").addEventListener("click", async ()=>{
+    const nome = document.getElementById("nome").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value;
+    const profissao = document.getElementById("profissao").value;
+    const finalidade = document.getElementById("finalidade").value;
+    const err = document.getElementById("err");
+    const btn = document.getElementById("go2");
+    if(!nome){ err.textContent="Digite seu nome"; err.classList.add("on"); return; }
+    if(!email.includes("@")){ err.textContent="Digite um e-mail válido"; err.classList.add("on"); return; }
+    if(senha.length<6){ err.textContent="A senha precisa ter pelo menos 6 caracteres"; err.classList.add("on"); return; }
+    if(!profissao){ err.textContent="Selecione sua profissão"; err.classList.add("on"); return; }
+    if(!finalidade){ err.textContent="Selecione a finalidade de uso"; err.classList.add("on"); return; }
+    err.classList.remove("on"); btn.disabled = true; btn.textContent = "Um instante…";
+    const { data, error } = await sb.auth.signUp({ email, password: senha, options: { data: { nome, profissao, finalidade, plano_desejado: state.plan } } });
+    btn.disabled = false; btn.textContent = "Ir para pagamento";
+    if (error) { err.textContent = traduzErroAuth(error.message); err.classList.add("on"); return; }
+    state.nome = nome; state.email = email;
+    state.profissao = profissao; state.finalidade = finalidade;
+    if (!data.session) { renderConfirmeEmail(email); return; }
+    renderPix();
+  });
+}
+
+function renderContaGratis(){
+  card.innerHTML = `${closeBtn()}
+    <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
+    ${steps(2)}
+    <h1>Criar sua conta grátis</h1>
+    <p class="sub">Plano <b>Experimente — R$0</b>, 1 orçamento grátis. <a class="btn ghost" id="back1" style="display:inline">trocar plano</a></p>
+    <div class="err" id="err"></div>
+    <label class="f">Seu nome<input class="in" id="nome" placeholder="Como podemos te chamar"></label>
+    <label class="f">E-mail<input class="in" id="email" placeholder="seu@email.com"></label>
+    <label class="f">Senha<input class="in" type="password" id="senha" placeholder="Crie uma senha"></label>
+    <div class="grid g2">
+      <label class="f">Profissão<select class="in" id="profissao">
+        <option value="">Selecione</option>
+        <option>Pedreiro(a) / Mestre de obras</option>
+        <option>Empreiteiro(a) / Empresa de reforma</option>
+        <option>Engenheiro(a) civil</option>
+        <option>Arquiteto(a)</option>
+        <option>Autônomo(a) (elétrica, hidráulica, marcenaria...)</option>
+        <option>Outra</option>
+      </select></label>
+      <label class="f">Você vai usar pra...<select class="in" id="finalidade">
+        <option value="">Selecione</option>
+        <option value="profissional">Fazer orçamento pra cliente (uso profissional)</option>
+        <option value="pessoal">Minha própria reforma (uso pessoal)</option>
+        <option value="outro">Outro motivo</option>
+      </select></label>
+    </div>
+    <button class="btn primary" id="go2" style="margin-top:6px">Criar conta e começar</button>
+    <p class="gate-switch">Já tem conta? <a id="toLogin2">Entrar</a></p>
+  `;
+  bindClose();
+  document.getElementById("back1").addEventListener("click", renderPlano);
+  document.getElementById("toLogin2").addEventListener("click", ()=> location.href = "index.html");
+  document.getElementById("go2").addEventListener("click", async ()=>{
+    const nome = document.getElementById("nome").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value;
+    const profissao = document.getElementById("profissao").value;
+    const finalidade = document.getElementById("finalidade").value;
+    const err = document.getElementById("err");
+    const btn = document.getElementById("go2");
+    if(!nome){ err.textContent="Digite seu nome"; err.classList.add("on"); return; }
+    if(!email.includes("@")){ err.textContent="Digite um e-mail válido"; err.classList.add("on"); return; }
+    if(senha.length<6){ err.textContent="A senha precisa ter pelo menos 6 caracteres"; err.classList.add("on"); return; }
+    if(!profissao){ err.textContent="Selecione sua profissão"; err.classList.add("on"); return; }
+    if(!finalidade){ err.textContent="Selecione a finalidade de uso"; err.classList.add("on"); return; }
+    err.classList.remove("on"); btn.disabled = true; btn.textContent = "Um instante…";
+    const { data, error } = await sb.auth.signUp({ email, password: senha, options: { data: { nome, profissao, finalidade, plano_desejado: "gratis" } } });
+    btn.disabled = false; btn.textContent = "Criar conta e começar";
+    if (error) { err.textContent = traduzErroAuth(error.message); err.classList.add("on"); return; }
+    state.nome = nome; state.email = email;
+    state.profissao = profissao; state.finalidade = finalidade;
+    if (!data.session) { renderConfirmeEmail(email); return; }
+    card.innerHTML = `${closeBtn()}<div class="okwrap"><div class="okmark">${check.replace('currentColor','var(--green)')}</div>
+      <h1>Conta criada!</h1>
+      <p class="sub">Você já pode criar seu primeiro orçamento grátis, ${nome.split(" ")[0]}.</p>
+      <button class="btn primary" id="goToApp">Ir para o painel</button></div>`;
+    bindClose();
+    document.getElementById("goToApp").addEventListener("click", ()=> location.href = "index.html");
+  });
+}
+
+function renderPix(){
+  card.innerHTML = `${closeBtn()}
+    <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
+    ${steps(3)}
+    <h1>Pagamento via Pix</h1>
+    <p class="sub">Escaneie o QR code ou copie o código abaixo no app do seu banco.</p>
+    <div class="pixbox">
+      <div class="qr"></div>
+      <span class="amount"><span>Valor da assinatura · Plano ${PLANS[state.plan].nome}</span>${PLANS[state.plan].label.replace("R$","R$ ")},00</span>
+      <div class="copyrow">
+        <input readonly value="00020126580014BR.GOV.BCB.PIX...quantofica...5204000053039865802BR" id="pixcode">
+        <button id="copybtn">Copiar</button>
+      </div>
+      <div class="waitrow"><div class="spin"></div><span>Aguardando confirmação do pagamento…</span></div>
+    </div>
+    <p class="sub" style="margin-top:20px;font-size:12px;text-align:center">Assim que o Pix for confirmado, seu acesso libera automaticamente — sem precisar recarregar a página.</p>
+  `;
+  bindClose();
+  document.getElementById("copybtn").addEventListener("click", ()=>{
+    const el = document.getElementById("pixcode"); el.select();
+    document.execCommand?.("copy");
+    document.getElementById("copybtn").textContent = "Copiado!";
+    setTimeout(renderSucesso, 1400);
+  });
+}
+
+function renderSucesso(){
+  card.innerHTML = `${closeBtn()}
+    <div class="okwrap">
+      <div class="okmark">${check.replace('currentColor','#2F7D4F')}</div>
+      <h1>Pagamento confirmado!</h1>
+      <p class="sub">Bem-vindo(a) ao Quantofica, ${state.nome ? state.nome.split(" ")[0] : ""}.</p>
+      <div class="emailnote">O pagamento por Pix ainda está em construção — por enquanto sua conta já está criada e funcionando no plano <b>Experimente</b>. Assim que a cobrança estiver pronta, avisamos por e-mail em <b>${state.email || "seu e-mail"}</b>.</div>
+      <button class="btn primary" id="goToApp3">Ir para o painel</button>
+    </div>`;
+  bindClose();
+  document.getElementById("goToApp3").addEventListener("click", ()=> location.href = "index.html");
+}
+</script>
+</body>
+</html>
