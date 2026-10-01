@@ -163,6 +163,27 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.01em;margin:0}
 footer{padding:40px 0 46px;text-align:center;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line-soft)}
 footer a{color:var(--muted);font-weight:600}
 
+/* ---- trust bar ---- */
+.trustbar{display:flex;justify-content:center;gap:34px;flex-wrap:wrap;margin:28px 0 0;padding-top:28px;border-top:1px solid var(--line-soft)}
+.trust-it{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600}
+.trust-it svg{width:18px;height:18px;color:var(--green);flex:none}
+
+/* ---- faq ---- */
+.faq{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faqitem{background:var(--concrete);border-radius:var(--r-m);overflow:hidden}
+.faqitem summary{list-style:none;cursor:pointer;padding:18px 20px;font-weight:700;font-size:14.5px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faqitem summary::-webkit-details-marker{display:none}
+.faqitem summary .plus{flex:none;width:22px;height:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:16px;font-weight:800;transition:transform .15s ease}
+.faqitem[open] summary .plus{transform:rotate(45deg)}
+.faqitem p{margin:0;padding:0 20px 18px;color:var(--muted);font-size:13.5px;line-height:1.6}
+
+/* ---- security strip ---- */
+.secstrip{display:flex;align-items:center;gap:16px;background:var(--blue-soft);border-radius:var(--r-l);padding:20px 24px;margin-top:28px}
+.secstrip .ic{width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--blue);flex:none}
+.secstrip .ic svg{width:20px;height:20px}
+.secstrip b{display:block;font-size:13.5px;color:var(--ink)}
+.secstrip span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+
 /* ---- scroll reveal ---- */
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
 .reveal.is-visible{opacity:1;transform:translateY(0)}
@@ -432,9 +453,10 @@ select.in{appearance:none;-webkit-appearance:none;background-image:url("data:ima
         <div class="desc">1 orçamento grátis, PDF com marca d'água</div>
       </div>
       <div class="ptcard">
+        <span class="tag" style="background:var(--green);color:#fff">Sem mensalidade</span>
         <h3>Pacote de créditos</h3>
         <div class="price">R$29,90</div>
-        <div class="desc">10 orçamentos, não expira — sem mensalidade</div>
+        <div class="desc">10 orçamentos, não expira. Use quando precisar, sem data pra vencer</div>
       </div>
       <div class="ptcard on">
         <span class="tag">Recomendado</span>
@@ -443,7 +465,55 @@ select.in{appearance:none;-webkit-appearance:none;background-image:url("data:ima
         <div class="desc">No plano anual. Logo da sua empresa, Excel, histórico completo</div>
       </div>
     </div>
-    <div style="text-align:center"><button class="btn primary" id="plansCta">Ver planos completos</button></div>
+    <div style="text-align:center;margin-bottom:0"><button class="btn primary" id="plansCta">Ver planos completos</button></div>
+    <div class="trustbar reveal">
+      <div class="trust-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Sem cartão pra testar</div>
+      <div class="trust-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Cancele quando quiser, sem multa</div>
+      <div class="trust-it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Seus dados protegidos e nunca compartilhados</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="secstrip reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <div>
+        <b>Seus dados ficam protegidos</b>
+        <span>Conexão criptografada de ponta a ponta e cada conta só enxerga os próprios orçamentos e clientes — nunca compartilhamos ou vendemos seus dados pra ninguém.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Dúvidas comuns</div>
+      <h2>Antes de assinar, responde isso</h2>
+    </div>
+    <div class="faq reveal">
+      <details class="faqitem">
+        <summary>E se eu não usar todo mês, vou perder o que paguei?</summary>
+        <p>Se o seu uso é mais esporádico, o <b>Pacote de créditos</b> é feito exatamente pra isso: você paga uma vez, os 10 orçamentos não expiram, e usa quando precisar — sem mensalidade rodando no fundo.</p>
+      </details>
+      <details class="faqitem">
+        <summary>Posso cancelar quando quiser?</summary>
+        <p>Sim. O plano Ilimitado pode ser cancelado a qualquer momento, sem multa e sem burocracia. Você continua com acesso até o fim do período já pago.</p>
+      </details>
+      <details class="faqitem">
+        <summary>Preciso entender de informática pra usar?</summary>
+        <p>Não. O Quantofica foi pensado pra quem tá na obra, não no computador — é só digitar o preço que você paga e escolher os serviços, o cálculo e o PDF saem prontos.</p>
+      </details>
+      <details class="faqitem">
+        <summary>Meus dados e os dos meus clientes ficam seguros?</summary>
+        <p>Sim. Tudo trafega criptografado e cada conta só tem acesso aos próprios dados — ninguém mais vê seus orçamentos, preços ou informações de clientes.</p>
+      </details>
+      <details class="faqitem">
+        <summary>Vale a pena mesmo pagando, se eu já faço no Excel ou no papel?</summary>
+        <p>Um orçamento no papel ou numa planilha manual leva fácil 30 minutos e corre o risco de esquecer item. No Quantofica, o mesmo orçamento sai em poucos minutos, já calculado com o preço real da sua região — o tempo que você economiza numa semana já paga o plano do mês.</p>
+      </details>
+    </div>
   </div>
 </section>
 
@@ -565,13 +635,14 @@ function renderPlano(){
         </ul>
       </div>
       <div class="plan" data-p="creditos">
+        <span class="tag" style="background:var(--green);color:#fff">Sem mensalidade</span>
         <h3>Pacote de créditos</h3>
         <div class="price">R$29,90</div>
         <div class="sub" style="margin:-6px 0 10px;font-size:12px">10 orçamentos, não expira</div>
         <ul>
           <li>${check}10 orçamentos pra usar quando quiser</li>
           <li>${check}PDF com a marca Quantofica</li>
-          <li>${check}Sem mensalidade</li>
+          <li>${check}Dados protegidos, sem compromisso</li>
           <li class="off">${xicon}PDF com sua marca</li>
           <li class="off">${xicon}Exportar Excel</li>
         </ul>
