@@ -1291,7 +1291,7 @@ VIEWS.painel = () => {
   ];
   const pend = checks.filter(x => !x[0]).length;
   const recent = all.slice(0, 6);
-  return `${storageBanner()}
+  return `${storageBanner()}${planBanner()}
   <div class="top"><div><h1>${greet}${(c.empresa || c.nome) ? ", " + esc((c.empresa || c.nome).split(" ")[0]) : ""}</h1><p>Aqui está o andamento dos seus orçamentos.</p></div>
     <div class="actions"><button class="btn primary" data-act="novo">${ic("plus", 2.2)}Novo orçamento</button></div></div>
   <section class="hero">
@@ -2284,17 +2284,24 @@ function planosModal(){
     }
   });
 }
-function renderAssinaturaBox(){
+function planBanner(){
   if (PLANO === "experimente") {
     const usados = Math.min(ORC_TOTAL, 1);
     return `<div class="banner">Você está no plano <b>Experimente</b> (grátis) — ${usados} de 1 orçamento grátis usado. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a></div>`;
   }
+  if (PLANO === "creditos" && CREDITOS_REST != null) {
+    return `<div class="banner">Restam <b>${CREDITOS_REST} de 10</b> orçamentos do seu pacote de créditos. <a href="javascript:void(0)" onclick="planosModal()">Comprar mais créditos</a></div>`;
+  }
+  return "";
+}
+function renderAssinaturaBox(){
+  if (PLANO === "experimente") return planBanner();
   const nome = PLANOS_NOME[PLANO] || PLANO, valor = PLANOS_VALOR[PLANO] ?? 0;
   if (PLANO === "creditos") {
     return `<div class="grid g2">
       <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(nome)} — R$ ${N(valor)} (pagamento único)</div></label>
     </div>
-    ${CREDITOS_REST != null ? `<div class="banner" style="margin-top:10px">Restam <b>${CREDITOS_REST} de 10</b> orçamentos do seu pacote. <a href="javascript:void(0)" onclick="planosModal()">Comprar mais créditos</a></div>` : ""}
+    ${CREDITOS_REST != null ? `<div style="margin-top:10px">${planBanner()}</div>` : ""}
     <p class="hint" style="margin-top:10px"><a href="javascript:void(0)" onclick="planosModal()">Ver todos os planos</a>. A cobrança automática ainda está sendo finalizada — pra trocar de plano ou cancelar por enquanto, fale com a gente em <a href="javascript:void(0)" onclick="supportModal()">Ajuda / Suporte</a>.</p>`;
   }
   return `<div class="grid g2">
