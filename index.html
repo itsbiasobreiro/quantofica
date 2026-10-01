@@ -1819,7 +1819,7 @@ VIEWS.proposta = id => {
   </div>
   <div class="doc-wrap"><article class="doc ${PLANO === "experimente" ? "wm-free" : ""}">
     <header class="doc-head">
-      <div>${(PLANO === "profissional" && cf.logo) ? `<img src="${cf.logo}" alt="Logo">` : ""}</div>
+      <div>${(isIlimitado(PLANO) && cf.logo) ? `<img src="${cf.logo}" alt="Logo">` : ""}</div>
       <div class="doc-co"><b>${esc(cf.empresa) || "Sua empresa"}</b>${co.join("<br>")}</div>
     </header>
     <div class="doc-title"><h2>Proposta comercial</h2><div class="n">Nº <b>${esc(o.numero)}</b><br>Emitida em ${dBR(o.data)} · válida até ${dBR(validade(o))}</div></div>
@@ -2201,68 +2201,76 @@ function compRowModal(serviceCode){
 
 
 /* ---------- assinatura (reflete o plano real vindo de profiles.plano — cobrança de verdade ainda não existe) ---------- */
-const PLANOS_NOME = {experimente:"Experimente", essencial:"Essencial", profissional:"Profissional"};
-const PLANOS_VALOR = {experimente:0, essencial:19, profissional:39};
-const PLANOS_FEATURES = {
-  experimente: [
-    {ok:true, txt:"1 orçamento grátis"},
-    {ok:true, txt:"PDF com marca d'água"},
-    {ok:false, txt:"Orçamentos ilimitados"},
-    {ok:false, txt:"PDF com sua marca"},
-    {ok:false, txt:"Exportar Excel"},
-    {ok:false, txt:"Histórico salvo"},
-  ],
-  essencial: [
-    {ok:true, txt:"Orçamentos ilimitados"},
-    {ok:true, txt:"PDF com a marca Quantofica"},
-    {ok:false, txt:"PDF com sua marca"},
-    {ok:false, txt:"Exportar Excel"},
-    {ok:true, txt:"Últimos 10 orçamentos salvos"},
-    {ok:true, txt:"Suporte por e-mail"},
-  ],
-  profissional: [
-    {ok:true, txt:"Orçamentos ilimitados"},
-    {ok:true, txt:"PDF com a logo e dados da sua empresa"},
-    {ok:true, txt:"Exportar Excel"},
-    {ok:true, txt:"Histórico completo e ilimitado"},
-    {ok:true, txt:"Suporte prioritário"},
-  ],
-};
+const ILIMITADO_PLANOS = ["essencial", "profissional"]; // qualquer plano pago = "Ilimitado" na interface
+const isIlimitado = p => ILIMITADO_PLANOS.includes(p);
+const PLANOS_NOME = {experimente:"Experimente", essencial:"Ilimitado", profissional:"Ilimitado"};
+const PLANOS_VALOR = {experimente:0, essencial:24.9, profissional:24.9};
 const PLANO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
 const PLANO_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function featList(feats){
+  return `<ul style="list-style:none;margin:0 0 14px;padding:0;flex:1">${feats.map(f => `<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:${f.ok ? "var(--ink)" : "var(--faint)"}">
+    <span style="flex:none;width:16px;height:16px;display:inline-flex">${f.ok ? PLANO_CHECK : PLANO_X}</span>${esc(f.txt)}
+  </li>`).join("")}</ul>`;
+}
+function cardWrap(destaque, inner){
+  return `<div style="border:1px solid ${destaque ? "var(--blue)" : "var(--line-soft)"};border-radius:var(--r-m);padding:16px;display:flex;flex-direction:column;background:${destaque ? "var(--blue-soft)" : "var(--surface)"}">${inner}</div>`;
+}
 function planosModal(){
-  const ordem = ["experimente", "essencial", "profissional"];
-  const {sc, close} = openModal(`<div class="modal wide" role="dialog" aria-label="Planos" style="max-width:920px">
+  const atualIlimitado = isIlimitado(PLANO);
+  const {sc, close} = openModal(`<div class="modal wide" role="dialog" aria-label="Planos" style="max-width:960px">
     <div class="modal-head"><h3>Planos</h3><p class="hint" style="margin-top:4px">Cancele quando quiser, sem multa.</p></div>
     <div class="modal-body" style="padding:18px 22px">
       <div class="grid g3" style="align-items:stretch">
-        ${ordem.map(p => {
-          const atual = p === PLANO;
-          const nome = PLANOS_NOME[p], valor = PLANOS_VALOR[p];
-          const feats = PLANOS_FEATURES[p].map(f => `<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:${f.ok ? "var(--ink)" : "var(--faint)"}">
-            <span style="flex:none;width:16px;height:16px;display:inline-flex">${f.ok ? PLANO_CHECK : PLANO_X}</span>${esc(f.txt)}
-          </li>`).join("");
-          return `<div style="border:1px solid ${atual ? "var(--blue)" : "var(--line-soft)"};border-radius:var(--r-m);padding:16px;display:flex;flex-direction:column;background:${atual ? "var(--blue-soft)" : "var(--surface)"}">
-            ${atual ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
-            <h4 style="margin:0 0 4px">${esc(nome)}</h4>
-            <div style="font-size:22px;font-weight:800;margin-bottom:10px">R$ ${N(valor)}${valor ? "<span style='font-size:12px;font-weight:600;color:var(--muted)'>/mês</span>" : ""}</div>
-            <ul style="list-style:none;margin:0 0 14px;padding:0;flex:1">${feats}</ul>
-            ${atual
-              ? `<button class="btn ghost" disabled style="cursor:default">Plano atual</button>`
-              : `<button class="btn primary" data-escolher="${p}">${PLANOS_VALOR[p] > valor_atual(PLANO) ? "Fazer upgrade" : "Mudar de plano"}</button>`}
-          </div>`;
-        }).join("")}
+        ${cardWrap(PLANO === "experimente", `
+          ${PLANO === "experimente" ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
+          <h4 style="margin:0 0 4px">Experimente</h4>
+          <div style="font-size:22px;font-weight:800;margin-bottom:10px">R$ 0</div>
+          ${featList([{ok:true,txt:"1 orçamento grátis"},{ok:true,txt:"PDF com marca d'água"},{ok:false,txt:"Orçamentos ilimitados"},{ok:false,txt:"PDF com sua marca"},{ok:false,txt:"Exportar Excel"}])}
+          ${PLANO === "experimente" ? `<button class="btn ghost" disabled style="cursor:default">Plano atual</button>` : `<span></span>`}
+        `)}
+        ${cardWrap(false, `
+          <span style="height:18px"></span>
+          <h4 style="margin:0 0 4px">Pacote de créditos</h4>
+          <div style="font-size:22px;font-weight:800;margin-bottom:2px">R$ 29,90</div>
+          <div class="hint" style="margin-bottom:10px">10 orçamentos, não expira</div>
+          ${featList([{ok:true,txt:"10 orçamentos pra usar quando quiser"},{ok:true,txt:"PDF com a marca Quantofica"},{ok:true,txt:"Sem mensalidade"},{ok:false,txt:"PDF com sua marca"},{ok:false,txt:"Exportar Excel"}])}
+          <button class="btn primary" data-escolher="creditos">Comprar pacote</button>
+        `)}
+        ${cardWrap(atualIlimitado, `
+          ${atualIlimitado ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
+          <h4 style="margin:0 0 4px">Ilimitado</h4>
+          <div class="seg" id="seg-ciclo" style="margin:4px 0 10px">
+            <button type="button" class="on" data-ciclo="mensal">Mensal</button>
+            <button type="button" data-ciclo="anual">Anual</button>
+          </div>
+          <div id="preco-ilimitado"><div style="font-size:22px;font-weight:800;margin-bottom:2px">R$ 24,90<span style="font-size:12px;font-weight:600;color:var(--muted)">/mês</span></div><div class="hint" style="margin-bottom:10px">Cobrado todo mês, cancele quando quiser</div></div>
+          ${featList([{ok:true,txt:"Orçamentos ilimitados"},{ok:true,txt:"PDF com a logo e dados da sua empresa"},{ok:true,txt:"Exportar Excel"},{ok:true,txt:"Histórico completo"}])}
+          ${atualIlimitado ? `<button class="btn ghost" disabled style="cursor:default">Plano atual</button>` : `<button class="btn primary" data-escolher="ilimitado">Fazer upgrade</button>`}
+        `)}
       </div>
       <p class="hint" style="margin-top:16px">A cobrança automática ainda está sendo finalizada — por enquanto, a troca de plano é feita manualmente com a gente.</p>
     </div>
   </div>`);
-  function valor_atual(p){ return PLANOS_VALOR[p] ?? 0; }
+  let ciclo = "mensal";
+  $("#seg-ciclo")?.addEventListener("click", e => {
+    const b = e.target.closest("[data-ciclo]"); if (!b) return;
+    ciclo = b.dataset.ciclo;
+    $("#seg-ciclo").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    $("#preco-ilimitado").innerHTML = ciclo === "mensal"
+      ? `<div style="font-size:22px;font-weight:800;margin-bottom:2px">R$ 24,90<span style="font-size:12px;font-weight:600;color:var(--muted)">/mês</span></div><div class="hint" style="margin-bottom:10px">Cobrado todo mês, cancele quando quiser</div>`
+      : `<div style="font-size:22px;font-weight:800;margin-bottom:2px">R$ 14,90<span style="font-size:12px;font-weight:600;color:var(--muted)">/mês</span></div><div class="hint" style="margin-bottom:10px">R$ 178,80 cobrado uma vez por ano</div>`;
+  });
   sc.addEventListener("click", e => {
     const btn = e.target.closest("[data-escolher]");
     if (!btn) return;
     const alvo = btn.dataset.escolher;
     close();
-    supportModal({motivo:"Trocar de plano", msg:`Quero trocar do plano ${PLANOS_NOME[PLANO]} para o plano ${PLANOS_NOME[alvo]}.`});
+    if (alvo === "creditos") {
+      supportModal({motivo:"Trocar de plano", msg:"Quero comprar o pacote de 10 orçamentos (R$ 29,90)."});
+    } else {
+      const txt = ciclo === "mensal" ? "Ilimitado mensal (R$ 24,90/mês)" : "Ilimitado anual (R$ 14,90/mês, R$ 178,80 cobrado uma vez por ano)";
+      supportModal({motivo:"Trocar de plano", msg:`Quero assinar o plano ${txt}.`});
+    }
   });
 }
 function renderAssinaturaBox(){
@@ -2294,7 +2302,7 @@ VIEWS.config = () => {
       ${renderAssinaturaBox()}
     </section>
     <section class="panel"><h2>Sua empresa</h2><p class="sub">Aparece no cabeçalho da proposta.</p>
-      ${PLANO === "profissional" ? `
+      ${isIlimitado(PLANO) ? `
       <div class="logo-box" style="margin-bottom:18px"><div class="logo-prev" id="lp">${c.logo ? `<img src="${c.logo}" alt="">` : "Sem logo"}</div>
         <div><label class="btn sm" style="cursor:pointer">${ic("up")}Enviar logo<input type="file" accept="image/*" id="logo" hidden></label>
         ${c.logo ? `<button class="btn sm ghost" id="rmlogo">Remover</button>` : ""}<p class="hint" style="margin-top:8px">PNG ou JPG com fundo branco ou transparente.</p></div></div>
@@ -2302,7 +2310,7 @@ VIEWS.config = () => {
       <div class="logo-box" style="margin-bottom:18px;opacity:.55">
         <div class="logo-prev" style="filter:blur(1.5px)">Sem logo</div>
         <div><button class="btn sm" disabled style="cursor:not-allowed;opacity:.7">${ic("up")}Enviar logo</button>
-        <p class="hint" style="margin-top:8px">Disponível no plano <b>Profissional</b>. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a> pra colocar a logo da sua empresa na proposta.</p></div>
+        <p class="hint" style="margin-top:8px">Disponível no plano <b>Ilimitado</b>. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a> pra colocar a logo da sua empresa na proposta.</p></div>
       </div>
       `}
       <div class="grid g2">${f("empresa", "Nome ou empresa", "Ex.: Silva Reformas")}${f("doc", "CPF ou CNPJ")}${f("registro", "Registro profissional (opcional)", "CREA/CAU")}${f("tel", "Telefone / WhatsApp")}${f("email", "E-mail")}${f("cidade", "Cidade / UF")}</div>

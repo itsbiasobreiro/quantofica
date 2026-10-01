@@ -432,15 +432,15 @@ select.in{appearance:none;-webkit-appearance:none;background-image:url("data:ima
         <div class="desc">1 orçamento grátis, PDF com marca d'água</div>
       </div>
       <div class="ptcard">
-        <h3>Essencial</h3>
-        <div class="price">R$19<span>/mês</span></div>
-        <div class="desc">Orçamentos ilimitados, PDF com a marca Quantofica</div>
+        <h3>Pacote de créditos</h3>
+        <div class="price">R$29,90</div>
+        <div class="desc">10 orçamentos, não expira — sem mensalidade</div>
       </div>
       <div class="ptcard on">
         <span class="tag">Recomendado</span>
-        <h3>Profissional</h3>
-        <div class="price">R$39<span>/mês</span></div>
-        <div class="desc">PDF com a logo da sua empresa, Excel, histórico completo</div>
+        <h3>Ilimitado</h3>
+        <div class="price">R$14,90<span>/mês</span></div>
+        <div class="desc">No plano anual. Logo da sua empresa, Excel, histórico completo</div>
       </div>
     </div>
     <div style="text-align:center"><button class="btn primary" id="plansCta">Ver planos completos</button></div>
@@ -485,12 +485,12 @@ function traduzErroAuth(msg){
 }
 
 const PLANS = {
-  gratis:       { nome: "Experimente",   preco: 0,  label: "R$0" },
-  essencial:    { nome: "Essencial",     preco: 19, label: "R$19" },
-  profissional: { nome: "Profissional",  preco: 39, label: "R$39" },
+  gratis:    { nome: "Experimente", preco: 0,     label: "R$0",     sufixo: "", valorPix: "0,00" },
+  creditos:  { nome: "Pacote de créditos", preco: 29.9, label: "R$29,90", sufixo: "", valorPix: "29,90" },
+  ilimitado: { nome: "Ilimitado",   preco: 14.9,  label: "R$14,90", sufixo: "/mês", valorPix: "178,80" },
 };
 
-const state = { plan: "profissional", nome:"", email:"" };
+const state = { plan: "ilimitado", nome:"", email:"" };
 const card = document.getElementById("card");
 const overlay = document.getElementById("appOverlay");
 
@@ -562,35 +562,34 @@ function renderPlano(){
           <li class="off">${xicon}Orçamentos ilimitados</li>
           <li class="off">${xicon}PDF com sua marca</li>
           <li class="off">${xicon}Exportar Excel</li>
-          <li class="off">${xicon}Histórico salvo</li>
         </ul>
       </div>
-      <div class="plan" data-p="essencial">
-        <h3>Essencial</h3>
-        <div class="price">R$19<span> /mês</span></div>
+      <div class="plan" data-p="creditos">
+        <h3>Pacote de créditos</h3>
+        <div class="price">R$29,90</div>
+        <div class="sub" style="margin:-6px 0 10px;font-size:12px">10 orçamentos, não expira</div>
         <ul>
-          <li>${check}Orçamentos ilimitados</li>
+          <li>${check}10 orçamentos pra usar quando quiser</li>
           <li>${check}PDF com a marca Quantofica</li>
+          <li>${check}Sem mensalidade</li>
           <li class="off">${xicon}PDF com sua marca</li>
           <li class="off">${xicon}Exportar Excel</li>
-          <li>${check}Últimos 10 orçamentos salvos</li>
-          <li>${check}Suporte por e-mail</li>
         </ul>
       </div>
-      <div class="plan on" data-p="profissional">
+      <div class="plan on" data-p="ilimitado">
         <span class="tag">Recomendado</span>
-        <h3>Profissional</h3>
-        <div class="price">R$39<span> /mês</span></div>
+        <h3>Ilimitado</h3>
+        <div class="price">R$14,90<span> /mês</span></div>
+        <div class="sub" style="margin:-6px 0 10px;font-size:12px">No plano anual (R$178,80/ano). Mensal sai por R$24,90.</div>
         <ul>
           <li>${check}Orçamentos ilimitados</li>
           <li>${check}<b>PDF com a logo e dados da sua empresa</b></li>
           <li>${check}Exportar Excel</li>
           <li>${check}Histórico completo e ilimitado</li>
-          <li>${check}Suporte prioritário</li>
         </ul>
       </div>
     </div>
-    <p class="sub" style="margin:14px 0 20px;font-size:12px">Cancele quando quiser, sem multa. Pagamento único mensal via Pix.</p>
+    <p class="sub" style="margin:14px 0 20px;font-size:12px">Cancele quando quiser, sem multa. Pagamento via Pix.</p>
     <button class="btn primary" id="go1">Continuar</button>
     <p class="gate-switch">Já tem conta? <a id="toLogin">Entrar</a></p>
   `;
@@ -614,7 +613,7 @@ function renderConta(){
     <div class="brandrow">${gateMark}<span class="brand-name">quantofica</span></div>
     ${steps(2)}
     <h1>Criar sua conta</h1>
-    <p class="sub">Plano <b>${plano.nome} — ${plano.label}/mês</b>. <a class="btn ghost" id="back1" style="display:inline">trocar plano</a></p>
+    <p class="sub">Plano <b>${plano.nome} — ${plano.label}${plano.sufixo}</b>. <a class="btn ghost" id="back1" style="display:inline">trocar plano</a></p>
     <div class="err" id="err"></div>
     <label class="f">Seu nome<input class="in" id="nome" placeholder="Como podemos te chamar"></label>
     <label class="f">E-mail<input class="in" id="email" placeholder="seu@email.com"></label>
@@ -736,7 +735,7 @@ function renderPix(){
     <p class="sub">Escaneie o QR code ou copie o código abaixo no app do seu banco.</p>
     <div class="pixbox">
       <div class="qr"></div>
-      <span class="amount"><span>Valor da assinatura · Plano ${PLANS[state.plan].nome}</span>${PLANS[state.plan].label.replace("R$","R$ ")},00</span>
+      <span class="amount"><span>Valor · Plano ${PLANS[state.plan].nome}</span>R$ ${PLANS[state.plan].valorPix}</span>
       <div class="copyrow">
         <input readonly value="00020126580014BR.GOV.BCB.PIX...quantofica...5204000053039865802BR" id="pixcode">
         <button id="copybtn">Copiar</button>
