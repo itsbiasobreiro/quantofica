@@ -1938,21 +1938,63 @@ async function buildProposalPDF(){
   }
   return pdf.output("blob");
 }
-function approvalLink(o){ return `https://app.somafica.com.br/aprovar/${(o.numero || "proposta").replace(/\//g, "-")}`; }
-function approvalLinkModal(o){
+const PUBLIC_APP_URL = "https://app.somafica.com.br"; // ajuste aqui se o domínio público for outro
+function genToken(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID().replace(/-/g, "") : (uid() + uid() + uid()); }
+function approvalLink(o){ return o.pubToken ? `${PUBLIC_APP_URL}/aprovar.html?t=${o.pubToken}` : ""; }
+async function syncPropostaPublica(o){
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { toast("Faça login de novo pra gerar o link."); return false; }
+  if (!o.pubToken) o.pubToken = genToken();
+  const c = calcOrc(o), cf = S.config;
+  const itens = o.itens.map((x, i) => [x, c.rows[i]]).filter(([, r]) => r.q > 0).map(([x, r]) => ({
+    servico: r.sv.d, amb: ambLabel(o, x) || "", unidade: r.sv.u, qtd: r.q, preco_unit: r.pu, total: r.total
+  }));
+  const payload = {
+    token: o.pubToken, user_id: user.id, orc_id: o.id, numero: o.numero,
+    data_emissao: o.data, validade: validade(o),
+    empresa: {nome: cf.empresa, doc: cf.doc, registro: cf.registro, tel: cf.tel, email: cf.email, cidade: cf.cidade, logo: isIlimitado(PLANO) ? (cf.logo || "") : ""},
+    cliente: o.cliente, tel: o.tel, endereco: o.endereco,
+    itens, total: c.total,
+    condicoes: {pagamento: o.cond || cf.cond, obs: o.obs || cf.obs}
+  };
+  const { error } = await sb.from("propostas_publicas").upsert(payload, {onConflict:"token"});
+  if (error) { toast("Não foi possível gerar/atualizar o link agora. Tente de novo em instantes."); return false; }
+  save();
+  return true;
+}
+async function refreshStatusProposta(o){
+  if (!o.pubToken) return;
+  const { data, error } = await sb.from("propostas_publicas").select("status, aberto_em, respondido_em, assinatura_nome, motivo_recusa").eq("token", o.pubToken).single();
+  if (error || !data) { toast("Não foi possível atualizar o status agora."); return; }
+  o.pubAbertoEm = data.aberto_em; o.pubRespondidoEm = data.respondido_em; o.pubAssinatura = data.assinatura_nome; o.pubMotivo = data.motivo_recusa;
+  if (data.status && data.status !== "enviado" && data.status !== o.status) o.status = data.status;
+  save();
+  toast("Status atualizado");
+}
+function trackingRow(icon, html){ return `<div style="display:flex;align-items:center;gap:6px"><span style="flex:none;width:16px;height:16px;color:var(--blue);display:inline-flex">${ic(icon,1.8)}</span><span>${html}</span></div>`; }
+function trackingStatusHTML(o){
+  if (!o.pubToken) return `<p class="hint">Gere o link abaixo pra ativar o acompanhamento de visualização e aprovação.</p>`;
+  const linhas = [];
+  linhas.push(o.pubAbertoEm ? trackingRow("check", `Visualizada pelo cliente em ${new Date(o.pubAbertoEm).toLocaleString("pt-BR")}`) : trackingRow("clock", "Ainda não visualizada pelo cliente"));
+  if (o.status === "aprovado" && o.pubAssinatura) linhas.push(trackingRow("check", `Aprovada por <b>${esc(o.pubAssinatura)}</b>${o.pubRespondidoEm ? ` em ${new Date(o.pubRespondidoEm).toLocaleString("pt-BR")}` : ""}`));
+  else if (o.status === "recusado") linhas.push(trackingRow("help", `Recusada pelo cliente${o.pubRespondidoEm ? ` em ${new Date(o.pubRespondidoEm).toLocaleString("pt-BR")}` : ""}${o.pubMotivo ? ` — "${esc(o.pubMotivo)}"` : ""}`));
+  return `<div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink);margin-top:4px">${linhas.join("")}</div>`;
+}
+async function approvalLinkModal(o){
+  const btnOpen = $("#link-aprovacao");
+  if (btnOpen) btnOpen.disabled = true;
+  const ok = await syncPropostaPublica(o);
+  if (btnOpen) btnOpen.disabled = false;
+  if (!ok) return;
   const link = approvalLink(o);
   const {sc, close} = openModal(`<div class="modal" role="dialog" aria-label="Link de aprovação online" style="max-width:520px">
     <div class="modal-head"><h3>Link de aprovação online</h3><p class="sub" style="margin:6px 0 0">Envie esse link pro cliente aprovar ou recusar a proposta pelo celular, sem precisar responder no WhatsApp.</p></div>
     <div class="modal-body" style="padding:6px 22px 4px">
       <label class="f"><span class="hint">Link</span><div style="display:flex;gap:8px"><input class="in" id="ap-link" readonly value="${esc(link)}" style="font-size:12.5px"><button class="btn dark" id="ap-copy" style="flex:none">${ic("copy", 1.8)}Copiar</button></div></label>
-      <div class="banner" style="margin-top:14px">MOCKUP: este link ainda não abre uma página de verdade nem muda o status sozinho — quando o backend existir, aprovar ou recusar aqui vai atualizar o status do orçamento automaticamente. Por enquanto, use os botões abaixo pra ver como vai funcionar.</div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)">
-        <div class="hint" style="margin-bottom:10px;font-weight:600;color:var(--ink)">Pré-visualizar / simular</div>
-        <div class="actions" style="flex-wrap:wrap">
-          <a class="btn ghost" href="somafica-aprovacao-cliente.html" target="_blank" rel="noopener">${ic("doc", 1.8)}Ver como o cliente vê</a>
-          <button class="btn" style="background:var(--green-soft);border-color:#BFE3CC;color:#1F5C39" data-sim="aprovado">Simular: cliente aprovou</button>
-          <button class="btn" style="background:var(--red-soft);border-color:#EFC6BB;color:#8A3020" data-sim="recusado">Simular: cliente recusou</button>
-        </div>
+        <div class="hint" style="margin-bottom:8px;font-weight:600;color:var(--ink)">Acompanhamento</div>
+        <div id="ap-tracking">${trackingStatusHTML(o)}</div>
+        <button class="btn sm ghost" id="ap-refresh" style="margin-top:10px">${ic("down",1.8)}Atualizar status</button>
       </div>
     </div>
     <div class="modal-foot"><span></span><button class="btn ghost" data-close>Fechar</button></div>
@@ -1961,10 +2003,9 @@ function approvalLinkModal(o){
     try { await navigator.clipboard.writeText(link); toast("Link copiado"); }
     catch (e) { $("#ap-link").select(); document.execCommand("copy"); toast("Link copiado"); }
   });
-  sc.addEventListener("click", e => {
-    const b = e.target.closest("[data-sim]"); if (!b) return;
-    o.status = b.dataset.sim; save(); close(); route();
-    toast(b.dataset.sim === "aprovado" ? "Simulação: cliente aprovou pelo link — status atualizado para Aprovado" : "Simulação: cliente recusou pelo link — status atualizado para Recusado");
+  $("#ap-refresh").addEventListener("click", async () => {
+    await refreshStatusProposta(o);
+    $("#ap-tracking").innerHTML = trackingStatusHTML(o);
   });
 }
 AFTER.proposta = id => {
