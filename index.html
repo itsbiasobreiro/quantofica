@@ -169,6 +169,10 @@ table.t th{text-align:left;font-size:12.5px;color:var(--muted);font-weight:600;p
 table.t td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;white-space:nowrap}
 table.t tr:last-child td{border-bottom:0}
 table.t .r{text-align:right}
+table.t .c{text-align:center}
+table.t.tight th{padding:8px 12px}
+table.t.tight td{padding:7px 12px}
+.icon-pair{display:inline-flex;gap:4px;align-items:center;justify-content:center}
 /* Só a 1ª coluna (nome do item) pode quebrar linha — as demais (tipo, unidade, valores)
    ficam numa linha só; se não couberem, o .tbl-wrap rola na horizontal. */
 table.t td:first-child,table.t th:first-child{white-space:normal;overflow-wrap:break-word;word-wrap:break-word;min-width:170px}
@@ -294,6 +298,9 @@ table.t tbody tr.link:hover{background:#FAFBFA}
 /* ---------- misc ---------- */
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--graphite);color:#fff;padding:12px 18px;border-radius:var(--r-m);font-weight:600;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:rise .18s ease}
 .banner{background:var(--yellow-soft);border:1px solid #F0D98A;color:#6B5000;border-radius:var(--r-m);padding:12px 16px;margin-bottom:18px;font-size:13.5px}
+.info-note{background:var(--blue-soft);border:1px solid #C7D7EA;color:var(--ink);border-radius:var(--r-m);padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.info-note svg{flex:none;width:18px;height:18px;margin-top:1px;color:var(--blue)}
+.info-note b{color:var(--blue)}
 details.cmp{background:#fff;border:1px solid var(--line-soft);border-radius:var(--r-m);margin-bottom:8px}
 details.cmp summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto auto auto 20px;gap:18px;align-items:center;padding:14px 16px}
 .cmp-act{display:flex;gap:2px}
@@ -1017,7 +1024,8 @@ const ICON = {
   user:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.8 4.4-6 7.5-6s6.2 2.2 7.5 6"/>',
   lock:'<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   link:'<path d="M9 15l6-6"/><path d="M11 6.5l.7-.7a4 4 0 0 1 5.7 5.7l-1.4 1.4"/><path d="M13 17.5l-.7.7a4 4 0 0 1-5.7-5.7l1.4-1.4"/>',
-  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  check:'<path d="M4 12.5l5 5L20 6.5"/>'
 };
 const ic = (n, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICON[n]}</svg>`;
 
@@ -1025,7 +1033,7 @@ const ic = (n, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 const SUPABASE_URL = "https://jzsjhiflyxpepznkoyxk.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6c2poaWZseXhwZXB6bmtveXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzIzNjgsImV4cCI6MjEwNjM0ODM2OH0.CjSku4Gt7V69ZFSwGOMM7E7uhNv8n1gISfuFMmNe9PY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let PLANO = "experimente", ORC_TOTAL = 0;
+let PLANO = "experimente", ORC_TOTAL = 0, CREDITOS_REST = null;
 
 /* ================= estado ================= */
 let storageOK = true;
@@ -1092,7 +1100,7 @@ async function loadRemoteState(){
   if (!user) return false;
   const [{ data: us, error: e1 }, { data: pf, error: e2 }] = await Promise.all([
     sb.from("user_state").select("data").eq("user_id", user.id).single(),
-    sb.from("profiles").select("plano, orcamentos_criados_total").eq("id", user.id).single()
+    sb.from("profiles").select("*").eq("id", user.id).single()
   ]);
   if (e1 || e2) { toast("Não foi possível carregar seus dados. Verifique sua internet e recarregue a página."); return false; }
   const temDados = us && us.data && Object.keys(us.data).length > 0;
@@ -1101,6 +1109,7 @@ async function loadRemoteState(){
   S.config.email = user.email || S.config.email;
   PLANO = pf?.plano || "experimente";
   ORC_TOTAL = pf?.orcamentos_criados_total || 0;
+  CREDITOS_REST = (pf && pf.creditos_restantes != null) ? pf.creditos_restantes : null;
   if (!temDados) await save(true); // primeira vez: grava o seed de exemplo já na nuvem
   return true;
 }
@@ -1334,11 +1343,11 @@ VIEWS.orcamentos = () => `
 function drawList(){
   const q = filt.q.toLowerCase();
   const arr = S.orcamentos.filter(o => (filt.st === "todos" || o.status === filt.st) && (!q || [o.cliente, o.numero, o.endereco].join(" ").toLowerCase().includes(q)));
-  $("#list").innerHTML = arr.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Cliente</th><th>Nº</th><th>Data</th><th>Serviços</th><th>Status</th><th class="r">Valor</th><th></th></tr></thead><tbody>
-    ${arr.map(o => { const fu = o.status === "enviado" && o.proximoContato ? (o.proximoContato <= todayISO() ? "due" : "soon") : ""; return `<tr class="link" data-open="${o.id}"><td><b>${esc(o.cliente) || "Sem nome"}</b> ${o.exemplo ? '<span class="tag ex">Exemplo</span>' : ""}${fu === "due" ? ` <span class="tag fu-due" title="Follow-up para ${dBR(o.proximoContato)}">${ic("bell",2)} Cobrar retorno</span>` : fu === "soon" ? ` <span class="tag fu-soon" title="Follow-up marcado">${ic("bell",2)} ${dBR(o.proximoContato)}</span>` : ""}<div class="hint">${esc(o.endereco)}</div></td><td>${esc(o.numero)}</td><td>${dBR(o.data)}</td><td>${o.itens.length}</td>
-    <td><select class="status-select st-${o.status}" data-statussel="${o.id}" aria-label="Mudar situação">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${o.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
-    <td class="r"><b>${R(calcOrc(o).total)}</b></td>
-    <td class="r" style="white-space:nowrap"><button class="icon-btn" title="Duplicar" data-dup="${o.id}" style="color:var(--muted)">${ic("copy")}</button><button class="icon-btn" title="Excluir" data-del="${o.id}">${ic("trash")}</button></td></tr>`; }).join("")}
+  $("#list").innerHTML = arr.length ? `<div class="tbl-wrap"><table class="t tight"><thead><tr><th>Cliente</th><th class="c">Nº</th><th class="c">Data</th><th class="c">Serviços</th><th class="c">Status</th><th class="c">Valor</th><th></th></tr></thead><tbody>
+    ${arr.map(o => { const fu = o.status === "enviado" && o.proximoContato ? (o.proximoContato <= todayISO() ? "due" : "soon") : ""; return `<tr class="link" data-open="${o.id}"><td><b>${esc(o.cliente) || "Sem nome"}</b> ${o.exemplo ? '<span class="tag ex">Exemplo</span>' : ""}${fu === "due" ? ` <span class="tag fu-due" title="Follow-up para ${dBR(o.proximoContato)}">${ic("bell",2)} Cobrar retorno</span>` : fu === "soon" ? ` <span class="tag fu-soon" title="Follow-up marcado">${ic("bell",2)} ${dBR(o.proximoContato)}</span>` : ""}<div class="hint">${esc(o.endereco)}</div></td><td class="c">${esc(o.numero)}</td><td class="c">${dBR(o.data)}</td><td class="c">${o.itens.length}</td>
+    <td class="c"><select class="status-select st-${o.status}" data-statussel="${o.id}" aria-label="Mudar situação">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${o.status === k ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+    <td class="c"><b>${R(calcOrc(o).total)}</b></td>
+    <td class="c" style="white-space:nowrap"><span class="icon-pair"><button class="icon-btn" title="Duplicar" data-dup="${o.id}" style="color:var(--muted)">${ic("copy")}</button><button class="icon-btn" title="Excluir" data-del="${o.id}">${ic("trash")}</button></span></td></tr>`; }).join("")}
   </tbody></table></div>`
   : `<div class="empty"><h3>Nada por aqui</h3><p>${S.orcamentos.length ? "Nenhum orçamento com esse filtro." : "Crie seu primeiro orçamento."}</p><button class="btn primary" data-act="novo">${ic("plus", 2.2)}Novo orçamento</button></div>`;
 }
@@ -2104,6 +2113,7 @@ VIEWS.composicoes = () => {
   const m = insMap();
   return `<div class="top"><div><h1>Composições</h1><p>Quanto de material e quantas horas cada serviço consome por unidade, com perdas.</p></div>
     <div class="actions"><button class="btn ghost" data-reset-comp>Restaurar composições de exemplo</button><button class="btn primary" data-newsvc>${ic("plus", 2.2)}Novo serviço</button></div></div>
+  <div class="info-note">${ic("help", 1.8)}<span><b>O que é uma composição?</b> É tudo que entra para executar um serviço — os materiais usados, a mão de obra necessária e a quantidade de cada um. É com base nela que o sistema calcula automaticamente o custo de cada serviço nos seus orçamentos.</span></div>
   <p class="hint" style="margin:-8px 0 16px">A mão de obra é multiplicada pelo fator de reforma (${N(num(S.config.fator))}×), definido em Configurações.</p>
   ${S.servicos.map(s => serviceBlock(s, m)).join("")}`;
 };
@@ -2203,8 +2213,8 @@ function compRowModal(serviceCode){
 /* ---------- assinatura (reflete o plano real vindo de profiles.plano — cobrança de verdade ainda não existe) ---------- */
 const ILIMITADO_PLANOS = ["essencial", "profissional"]; // qualquer plano pago = "Ilimitado" na interface
 const isIlimitado = p => ILIMITADO_PLANOS.includes(p);
-const PLANOS_NOME = {experimente:"Experimente", essencial:"Ilimitado", profissional:"Ilimitado"};
-const PLANOS_VALOR = {experimente:0, essencial:24.9, profissional:24.9};
+const PLANOS_NOME = {experimente:"Experimente", essencial:"Ilimitado", profissional:"Ilimitado", creditos:"Pacote de créditos"};
+const PLANOS_VALOR = {experimente:0, essencial:24.9, profissional:24.9, creditos:29.9};
 const PLANO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
 const PLANO_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 function featList(feats){
@@ -2217,6 +2227,7 @@ function cardWrap(destaque, inner){
 }
 function planosModal(){
   const atualIlimitado = isIlimitado(PLANO);
+  const atualCreditos = PLANO === "creditos";
   const {sc, close} = openModal(`<div class="modal wide" role="dialog" aria-label="Planos" style="max-width:960px">
     <div class="modal-head"><h3>Planos</h3><p class="hint" style="margin-top:4px">Cancele quando quiser, sem multa.</p></div>
     <div class="modal-body" style="padding:18px 22px">
@@ -2228,13 +2239,13 @@ function planosModal(){
           ${featList([{ok:true,txt:"1 orçamento grátis"},{ok:true,txt:"PDF com marca d'água"},{ok:false,txt:"Orçamentos ilimitados"},{ok:false,txt:"PDF com sua marca"},{ok:false,txt:"Exportar Excel"}])}
           ${PLANO === "experimente" ? `<button class="btn ghost" disabled style="cursor:default">Plano atual</button>` : `<span></span>`}
         `)}
-        ${cardWrap(false, `
-          <span style="height:18px"></span>
+        ${cardWrap(atualCreditos, `
+          ${atualCreditos ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
           <h4 style="margin:0 0 4px">Pacote de créditos</h4>
           <div style="font-size:22px;font-weight:800;margin-bottom:2px">R$ 29,90</div>
-          <div class="hint" style="margin-bottom:10px">10 orçamentos, não expira</div>
+          <div class="hint" style="margin-bottom:10px">${atualCreditos && CREDITOS_REST != null ? `<b style="color:var(--blue)">Restam ${CREDITOS_REST} de 10 orçamentos</b>` : "10 orçamentos, não expira"}</div>
           ${featList([{ok:true,txt:"10 orçamentos pra usar quando quiser"},{ok:true,txt:"PDF com a marca Somafica"},{ok:true,txt:"Sem mensalidade"},{ok:false,txt:"PDF com sua marca"},{ok:false,txt:"Exportar Excel"}])}
-          <button class="btn primary" data-escolher="creditos">Comprar pacote</button>
+          <button class="btn primary" data-escolher="creditos">${atualCreditos ? "Comprar mais créditos" : "Comprar pacote"}</button>
         `)}
         ${cardWrap(atualIlimitado, `
           ${atualIlimitado ? `<span class="hint" style="font-weight:700;color:var(--blue);margin-bottom:4px">SEU PLANO ATUAL</span>` : `<span style="height:18px"></span>`}
@@ -2279,6 +2290,13 @@ function renderAssinaturaBox(){
     return `<div class="banner">Você está no plano <b>Experimente</b> (grátis) — ${usados} de 1 orçamento grátis usado. <a href="javascript:void(0)" onclick="planosModal()">Fazer upgrade</a></div>`;
   }
   const nome = PLANOS_NOME[PLANO] || PLANO, valor = PLANOS_VALOR[PLANO] ?? 0;
+  if (PLANO === "creditos") {
+    return `<div class="grid g2">
+      <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(nome)} — R$ ${N(valor)} (pagamento único)</div></label>
+    </div>
+    ${CREDITOS_REST != null ? `<div class="banner" style="margin-top:10px">Restam <b>${CREDITOS_REST} de 10</b> orçamentos do seu pacote. <a href="javascript:void(0)" onclick="planosModal()">Comprar mais créditos</a></div>` : ""}
+    <p class="hint" style="margin-top:10px"><a href="javascript:void(0)" onclick="planosModal()">Ver todos os planos</a>. A cobrança automática ainda está sendo finalizada — pra trocar de plano ou cancelar por enquanto, fale com a gente em <a href="javascript:void(0)" onclick="supportModal()">Ajuda / Suporte</a>.</p>`;
+  }
   return `<div class="grid g2">
       <label class="f"><span class="hint">Plano atual</span><div class="in" style="display:flex;align-items:center;background:var(--concrete);font-weight:700">${esc(nome)} — R$ ${N(valor)}/mês</div></label>
     </div>
@@ -2314,6 +2332,7 @@ VIEWS.config = () => {
       </div>
       `}
       <div class="grid g2">${f("empresa", "Nome ou empresa", "Ex.: Silva Reformas")}${f("doc", "CPF ou CNPJ")}${f("registro", "Registro profissional (opcional)", "CREA/CAU")}${f("tel", "Telefone / WhatsApp")}${f("email", "E-mail")}${f("cidade", "Cidade / UF")}</div>
+      <div class="actions" style="margin-top:14px"><button class="btn dark" id="salvar-empresa">${ic("check",1.8)}Salvar</button></div>
     </section>
     <section class="panel"><h2>Preço de referência por região</h2><p class="sub">Pra não começar do zero: carregue um ponto de partida pros seus preços, com base no custo médio do seu estado.</p>
       <div class="grid g2">
@@ -2335,6 +2354,7 @@ VIEWS.config = () => {
     <section class="panel"><h2>Padrões da proposta</h2><p class="sub">Texto que sai no fim de toda proposta.</p>
       <div class="grid g3">${n("validade", "Validade da proposta (dias)", "")}<label class="f span2">Condições de pagamento<input class="in" data-c="cond" value="${esc(c.cond)}"></label>
       <label class="f span3">Observações<textarea class="in" data-c="obs">${esc(c.obs)}</textarea></label></div>
+      <div class="actions" style="margin-top:14px"><button class="btn dark" id="salvar-padroes">${ic("check",1.8)}Salvar</button></div>
     </section>
     <section class="panel"><h2>Backup dos seus dados</h2><p class="sub">Seus dados já ficam salvos automaticamente na nuvem. Ainda assim, é uma boa prática baixar uma cópia de vez em quando.</p>
       <div class="actions"><button class="btn dark" id="exp">${ic("down")}Baixar backup</button><label class="btn" style="cursor:pointer">${ic("up")}Restaurar backup<input type="file" accept=".json,application/json" id="imp" hidden></label>
@@ -2401,6 +2421,8 @@ AFTER.config = () => {
     rd.readAsText(file);
   });
   $("#rmex").addEventListener("click", () => { const n = S.orcamentos.filter(o => o.exemplo).length; if (!n) return toast("Não há orçamentos de exemplo"); if (confirm(`Apagar ${n} orçamento(s) de exemplo?`)) { S.orcamentos = S.orcamentos.filter(o => !o.exemplo); save(); toast("Exemplos apagados"); } });
+  $("#salvar-empresa")?.addEventListener("click", async () => { await save(true); toast("Dados da empresa salvos"); });
+  $("#salvar-padroes")?.addEventListener("click", async () => { await save(true); toast("Padrões da proposta salvos"); });
 };
 
 document.addEventListener("click", e => {
