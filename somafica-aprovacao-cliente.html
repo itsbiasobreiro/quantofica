@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proposta 004/2026 · Sobreiro Reformas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --graphite:#1C2124; --graphite-2:#272E32; --graphite-3:#3A4348;
+  --concrete:#ECEEEC; --surface:#FFFFFF; --line:#D8DCDA; --line-soft:#E7E9E7;
+  --ink:#1C2124; --muted:#687276; --faint:#9AA3A6;
+  --yellow:#F2B705; --green:#2F7D4F; --green-soft:#E1F1E7; --red:#B4412F; --red-soft:#F8E5E1;
+  --r-s:8px; --r-m:10px; --r-l:16px;
+  --font:"Archivo","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font);font-size:14px;color:var(--ink);background:var(--concrete);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:22px 18px 60px}
+.topbar{display:flex;align-items:center;gap:10px;padding:6px 2px 18px;color:var(--muted);font-size:12.5px}
+.topbar .dot{width:6px;height:6px;border-radius:99px;background:var(--faint)}
+.doc{background:#fff;padding:26px 24px 22px;border-radius:14px;box-shadow:0 2px 3px rgba(28,33,36,.06),0 18px 40px rgba(28,33,36,.10)}
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:14px;border-bottom:3px solid var(--yellow)}
+.doc-head b{font-size:16px;display:block}
+.doc-head .co{margin-top:4px;font-size:11.5px;color:var(--muted);line-height:1.6}
+.doc-title{display:flex;justify-content:space-between;align-items:flex-end;margin:20px 0 14px;gap:12px;flex-wrap:wrap}
+.doc-title h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px}
+.doc-title .n{text-align:right;font-size:11.5px;color:var(--muted);line-height:1.6}
+.doc-title .n b{color:var(--ink);font-size:13px}
+.doc-client{display:grid;grid-template-columns:1.3fr 1fr;gap:10px 20px;background:#F4F5F4;border-radius:8px;padding:12px 14px;font-size:12.5px;margin-bottom:16px}
+.doc-client span{display:block;color:var(--muted);font-size:10.5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+table th{text-align:left;font-weight:700;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;padding:7px 6px;border-bottom:2px solid var(--ink)}
+table td{padding:9px 6px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+table .c{text-align:center}
+table .r{text-align:right}
+.doc-total{display:flex;justify-content:space-between;align-items:center;background:var(--graphite);color:#fff;padding:13px 16px;margin-top:2px;border-radius:0 0 8px 8px;font-size:13px}
+.doc-total b{font-size:18px;color:var(--yellow)}
+.doc-cond{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;font-size:12px}
+.doc-cond span{display:block;color:var(--muted);font-size:10.5px;margin-bottom:2px}
+.doc-foot{margin-top:20px;text-align:center;font-size:10.5px;color:var(--faint)}
+.actbar{margin-top:22px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{flex:1;min-width:200px;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:15px;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn.primary:hover{background:#256841}
+.btn.ghost{background:#fff;color:var(--red);border-color:#EFC6BB}
+.btn.ghost:hover{background:var(--red-soft)}
+.hint{margin-top:14px;text-align:center;font-size:11.5px;color:var(--muted)}
+.state{background:#fff;border-radius:14px;padding:44px 28px;text-align:center;box-shadow:0 2px 3px rgba(28,33,36,.06),0 18px 40px rgba(28,33,36,.10)}
+.state .ico{width:64px;height:64px;border-radius:99px;display:grid;place-items:center;margin:0 auto 18px}
+.state.ok .ico{background:var(--green-soft);color:var(--green)}
+.state.no .ico{background:var(--red-soft);color:var(--red)}
+.state h2{margin:0 0 8px;font-size:20px}
+.state p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.6;max-width:420px;margin-inline:auto}
+textarea.in{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;resize:vertical;margin-top:14px}
+.hidden{display:none}
+@media (max-width:520px){
+  .wrap{padding:14px 12px 50px}
+  .doc{padding:18px 16px 16px}
+  .doc-head{flex-direction:column;gap:8px}
+  .doc-title{flex-direction:column;align-items:flex-start}
+  .doc-title .n{text-align:left}
+  .doc-cond{grid-template-columns:1fr}
+  table{font-size:11.5px}
+  .actbar{flex-direction:column}
+  .btn{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><span>Proposta enviada por Sobreiro Reformas</span><span class="dot"></span><span>via Somafica</span></div>
+
+  <div id="view-proposta">
+    <article class="doc">
+      <header class="doc-head">
+        <div><b>Sobreiro Reformas</b><div class="co">CNPJ 00.000.000/0001-00 · (35) 99999-0000<br>Poços de Caldas – MG</div></div>
+        <div style="text-align:right"><b style="font-size:16px">Somafica</b></div>
+      </header>
+      <div class="doc-title">
+        <h2>Proposta comercial</h2>
+        <div class="n">Nº <b>004/2026</b><br>Emitida em 22/09/2026 · válida até 07/10/2026</div>
+      </div>
+      <div class="doc-client">
+        <div><span>Cliente</span><b>Maria da Silva</b></div>
+        <div><span>Telefone</span>(35) 98888-8888</div>
+        <div style="grid-column:1/-1"><span>Endereço da obra</span>Rua das Acácias, 123 – Centro</div>
+      </div>
+      <table>
+        <thead><tr><th style="width:26px" class="c">#</th><th>Serviço</th><th class="c">Unid.</th><th class="r">Qtd.</th><th class="r">Preço unit.</th><th class="r">Total</th></tr></thead>
+        <tbody>
+          <tr><td class="c">1</td><td>Reboco e pintura de paredes <span style="color:var(--muted)">· Banheiro</span></td><td class="c">m²</td><td class="r">18,2</td><td class="r">R$ 62,00</td><td class="r"><b>R$ 1.128,40</b></td></tr>
+          <tr><td class="c">2</td><td>Revestimento cerâmico de piso <span style="color:var(--muted)">· Banheiro</span></td><td class="c">m²</td><td class="r">3,0</td><td class="r">R$ 118,00</td><td class="r"><b>R$ 354,00</b></td></tr>
+          <tr><td class="c">3</td><td>Impermeabilização de box <span style="color:var(--muted)">· Banheiro</span></td><td class="c">m²</td><td class="r">3,0</td><td class="r">R$ 95,00</td><td class="r"><b>R$ 285,00</b></td></tr>
+          <tr><td class="c">4</td><td>Pintura de paredes e teto <span style="color:var(--muted)">· Sala</span></td><td class="c">m²</td><td class="r">37,8</td><td class="r">R$ 38,00</td><td class="r"><b>R$ 1.436,40</b></td></tr>
+          <tr><td class="c">5</td><td>Instalação de porta completa</td><td class="c">un</td><td class="r">2</td><td class="r">R$ 650,00</td><td class="r"><b>R$ 1.300,00</b></td></tr>
+          <tr><td class="c">6</td><td>Descarte de entulho / limpeza final</td><td class="c">vb</td><td class="r">1</td><td class="r">R$ 480,00</td><td class="r"><b>R$ 480,00</b></td></tr>
+        </tbody>
+      </table>
+      <div class="doc-total"><span>Valor total da proposta</span><b>R$ 4.983,80</b></div>
+      <div class="doc-cond">
+        <div><span>Fornecimento</span>Material e mão de obra inclusos.</div>
+        <div><span>Prazo de execução</span>15 dias a partir do início dos serviços.</div>
+        <div><span>Condições de pagamento</span>50% na aprovação e 50% na conclusão dos serviços.</div>
+        <div><span>Observações</span>Não inclui projetos, taxas e licenças, louças, metais e acabamentos não listados.</div>
+      </div>
+      <div class="doc-foot">Proposta gerada com Somafica</div>
+    </article>
+
+    <div class="actbar">
+      <button class="btn primary" id="btn-aprovar">✓ Aprovar proposta</button>
+      <button class="btn ghost" id="btn-recusar">Recusar proposta</button>
+    </div>
+    <p class="hint">Ao aprovar, a Sobreiro Reformas é avisada e entra em contato pra combinar os próximos passos.</p>
+  </div>
+
+  <div id="view-recusa" class="hidden">
+    <div class="state no">
+      <h2 style="margin-bottom:14px">Por que você está recusando?</h2>
+      <p>Isso é opcional, mas ajuda a Sobreiro Reformas a te fazer uma proposta melhor.</p>
+      <textarea class="in" id="motivo" placeholder="Ex.: o valor ficou acima do que eu esperava, preciso de mais prazo, vou comparar com outros orçamentos..."></textarea>
+      <div class="actbar">
+        <button class="btn ghost" id="btn-confirma-recusa" style="background:var(--red);color:#fff;border-color:var(--red)">Confirmar recusa</button>
+        <button class="btn" id="btn-voltar">Voltar pra proposta</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-aprovado" class="hidden">
+    <div class="state ok">
+      <div class="ico">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2>Proposta aprovada!</h2>
+      <p>A Sobreiro Reformas foi notificada e vai entrar em contato pra combinar os próximos passos e a data de início da obra.</p>
+    </div>
+  </div>
+
+  <div id="view-recusado" class="hidden">
+    <div class="state no">
+      <div class="ico">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+      <h2>Obrigado pelo retorno</h2>
+      <p>A Sobreiro Reformas foi avisada de que você não vai seguir com esta proposta. Se quiser conversar sobre outras condições, é só chamar direto no WhatsApp.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// MOCKUP — esta página é um protótipo estático de como o cliente veria e responderia
+// ao "Link de aprovação online" (funcionalidade acessível em Proposta > Link de aprovação
+// dentro do app da Bianca). Numa versão real, o link seria único por orçamento, puxaria os
+// dados reais da proposta de um backend (Supabase) e a resposta do cliente atualizaria o
+// status do orçamento automaticamente no painel do prestador — nada disso está implementado
+// ainda, é só a experiência visual.
+const show = id => { ["view-proposta","view-recusa","view-aprovado","view-recusado"].forEach(v => document.getElementById(v).classList.toggle("hidden", v !== id)); window.scrollTo({top:0, behavior:"smooth"}); };
+document.getElementById("btn-aprovar").addEventListener("click", () => show("view-aprovado"));
+document.getElementById("btn-recusar").addEventListener("click", () => show("view-recusa"));
+document.getElementById("btn-voltar").addEventListener("click", () => show("view-proposta"));
+document.getElementById("btn-confirma-recusa").addEventListener("click", () => show("view-recusado"));
+</script>
+</body>
+</html>

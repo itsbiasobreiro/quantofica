@@ -1,6 +1,6 @@
 {
-  "name": "Quantofica",
-  "short_name": "Quantofica",
+  "name": "Somafica",
+  "short_name": "Somafica",
   "description": "Orçamentos de reforma rápidos e profissionais",
   "start_url": "./index.html",
   "scope": "./",
