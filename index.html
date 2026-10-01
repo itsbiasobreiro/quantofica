@@ -214,7 +214,9 @@ table.t tbody tr.link:hover{background:#FAFBFA}
 /* ---------- entrada / conta ---------- */
 .gate-active .side,.gate-active .bottom-nav,.gate-active .support-fab{display:none!important}
 .gate-active .app{grid-template-columns:1fr}
-.gatewrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#1C2124;
+.gate-active .main{padding:0}
+.gate-active body{background:#1C2124}
+.gatewrap{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:#1C2124;
   background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:28px 28px}
 .gatecard{background:#fff;border-radius:var(--r-l);width:min(420px,100%);padding:34px 30px 28px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:rise .18s ease}
 .gatecard .gbrand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
@@ -1491,10 +1493,15 @@ VIEWS.orc = id => {
   const o = getOrc(id);
   if (!o) return `<div class="empty"><h3>Orçamento não encontrado</h3><p>Ele pode ter sido excluído.</p><a class="btn" href="#/orcamentos">Ver orçamentos</a></div>`;
   const c = calcOrc(o), cf = S.config;
-  const fi = (k, l, extra = "", cls = "") => `<label class="f ${cls}">${l}<input class="in" data-o="${k}" value="${esc(o[k])}" ${extra}></label>`;
+  const trancado = PLANO === "experimente" && o.exemplo;
+  const fi = (k, l, extra = "", cls = "") => `<label class="f ${cls}">${l}<input class="in" data-o="${k}" value="${esc(o[k])}" ${trancado ? "disabled" : ""} ${extra}></label>`;
   return `<a class="back" href="#/orcamentos">${ic("back")}Orçamentos</a>
   <div class="top"><div><h1>${esc(o.cliente) || "Novo orçamento"}</h1><p>Proposta nº ${esc(o.numero)} · válida até ${dBR(validade(o))}</p></div>
     <div class="actions"><a class="btn" href="#/materiais/${o.id}">${ic("box", 1.8)}Lista de materiais</a><a class="btn dark" href="#/proposta/${o.id}">${ic("doc", 1.8)}Ver proposta</a></div></div>
+  ${trancado ? `<div class="banner" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+    <span>Este é um orçamento de <b>exemplo</b>, só pra você ver como funciona. Pra editar e usar de verdade (conta como seu orçamento grátis), clique ao lado.</span>
+    <button class="btn primary sm" id="usar-exemplo" style="flex:none">Usar este exemplo como meu orçamento</button>
+  </div>` : ""}
   <div class="editor">
     <div class="stack">
       <section class="panel">
@@ -1508,14 +1515,14 @@ VIEWS.orc = id => {
         <div class="panel-head"><div><h2>Textos desta proposta</h2><p class="sub">Só valem para este orçamento. Em branco, usa o padrão de Configurações.</p></div>
           ${(o.cond || o.obs) ? `<button class="btn sm ghost" data-clrtxt>Usar o padrão de novo</button>` : ""}</div>
         <div class="grid g2">
-          <label class="f span2">Condições de pagamento<textarea class="in" data-o="cond" placeholder="${esc(cf.cond)}">${esc(o.cond || "")}</textarea>${!o.cond ? `<span class="hint">Usando o padrão: “${esc(cf.cond)}”</span>` : ""}</label>
-          <label class="f span2">Observações<textarea class="in" data-o="obs" placeholder="${esc(cf.obs)}">${esc(o.obs || "")}</textarea>${!o.obs ? `<span class="hint">Usando o padrão de Configurações.</span>` : ""}</label>
+          <label class="f span2">Condições de pagamento<textarea class="in" data-o="cond" placeholder="${esc(cf.cond)}" ${trancado ? "disabled" : ""}>${esc(o.cond || "")}</textarea>${!o.cond ? `<span class="hint">Usando o padrão: “${esc(cf.cond)}”</span>` : ""}</label>
+          <label class="f span2">Observações<textarea class="in" data-o="obs" placeholder="${esc(cf.obs)}" ${trancado ? "disabled" : ""}>${esc(o.obs || "")}</textarea>${!o.obs ? `<span class="hint">Usando o padrão de Configurações.</span>` : ""}</label>
         </div>
       </section>
       <section>
         <div class="svc-head"><div><h2>Serviços</h2><p class="hint">Meça o cômodo uma vez: paredes, piso, teto e rodapé saem calculados.</p></div>
-          <div class="actions"><button class="btn" data-act="add">${ic("plus", 2.2)}Serviço avulso</button><button class="btn primary" data-act="room">${ic("ruler", 2)}Medir cômodo</button></div></div>
-        <div id="items">${itemsHTML(o, c)}</div>
+          <div class="actions"><button class="btn" data-act="add" ${trancado ? "disabled" : ""}>${ic("plus", 2.2)}Serviço avulso</button><button class="btn primary" data-act="room" ${trancado ? "disabled" : ""}>${ic("ruler", 2)}Medir cômodo</button></div></div>
+        <div id="items" ${trancado ? 'style="pointer-events:none;opacity:.65"' : ""}>${itemsHTML(o, c)}</div>
       </section>
     </div>
     <aside class="summary">
@@ -1571,11 +1578,15 @@ AFTER.orc = id => {
   const o = getOrc(id); if (!o) return;
   if (!Array.isArray(o.comodos)) o.comodos = [];
   const v = $("#view");
+  $("#usar-exemplo")?.addEventListener("click", async () => {
+    const btn = $("#usar-exemplo"); btn.disabled = true; btn.textContent = "Um instante…";
+    if (await podeCriarOrcamento()) { o.exemplo = false; save(); go("#/orc/" + o.id); }
+    else { btn.disabled = false; btn.textContent = "Usar este exemplo como meu orçamento"; }
+  });
   v.addEventListener("input", e => {
     const t = e.target;
     if (t.dataset.o && t.dataset.o !== "status") {
       o[t.dataset.o] = t.dataset.o === "prazo" ? t.value.replace(/\D/g, "") : t.value;
-      if (o.exemplo && t.dataset.o === "cliente") o.exemplo = false;
       if (t.dataset.o === "cliente") $(".top h1").textContent = t.value || "Novo orçamento";
       if (t.dataset.o === "data" || t.dataset.o === "numero") $(".top p").textContent = `Proposta nº ${o.numero} · válida até ${dBR(validade(o))}`;
       if (t.dataset.o === "cond" || t.dataset.o === "obs") {
@@ -1631,13 +1642,14 @@ AFTER.orc = id => {
   });
   if (!o.itens.length && !o.cliente) setTimeout(() => $('[data-o="cliente"]')?.focus(), 50);
 };
-function openModal(html){
+function openModal(html, opts){
+  const dismissible = !opts || opts.dismissible !== false;
   const sc = document.createElement("div"); sc.className = "scrim"; sc.innerHTML = html;
   document.body.appendChild(sc);
   const close = () => { sc.remove(); document.removeEventListener("keydown", esck); };
-  const esck = e => { if (e.key === "Escape") close(); };
+  const esck = e => { if (dismissible && e.key === "Escape") close(); };
   document.addEventListener("keydown", esck);
-  sc.addEventListener("click", e => { if (e.target === sc || e.target.closest("[data-close]")) close(); });
+  sc.addEventListener("click", e => { if (dismissible && (e.target === sc || e.target.closest("[data-close]"))) close(); });
   return {sc, close};
 }
 /* ---------- tour de boas-vindas ---------- */
@@ -1659,7 +1671,7 @@ function startTour(){
   const {sc, close} = openModal(`<div class="modal tour-modal" role="dialog" aria-label="Tour de boas-vindas">
     <div class="modal-body" id="tour-content" style="padding:34px 30px 8px;text-align:center">${tourStepHTML(0)}</div>
     <div class="modal-foot"><button class="btn ghost" id="tour-skip">Pular</button><div class="actions"><button class="btn ghost" id="tour-back" style="display:none">Voltar</button><button class="btn primary" id="tour-next">Próximo</button></div></div>
-  </div>`);
+  </div>`, {dismissible: false});
   const finish = () => { S.config.tourVisto = true; save(); close(); };
   const render = () => {
     $("#tour-content").innerHTML = tourStepHTML(tourIdx);
